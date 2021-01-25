@@ -10,6 +10,7 @@ The perfect typescript monorepo.
 - [ttypescript](https://github.com/cevek/ttypescript)
 - [typescript-eslint](https://github.com/typescript-eslint/typescript-eslint)
 - automatic build of dependencies defined as TS project references when running dev, etc
+- automatic import suggestions in vscode for symbols within the current project or a referenced one
 - incremental builds for faster dev rebuilds
 - base tsconfig.json, jest.config.js, .eslintrc.js, .prettierrc
 - non-relative paths for all imports
