@@ -25,4 +25,4 @@ The perfect typescript monorepo.
 
 ---
 
-You can review all the needed changes from the initial to final commit [here](https://github.com/rhyek/typescript-monorepo-example/compare/d5a703c9304376297fa39418e20255e8dd60cc90..1ed6cecdc63124706c9e67732b7e3444f1408626).
+You can review all the needed changes from the initial to final commit [here](https://github.com/rhyek/typescript-monorepo-example/compare/d5a703c9304376297fa39418e20255e8dd60cc90..7e732e7179ad82066f8e5655bd35babc38764a2c).
