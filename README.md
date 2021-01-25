@@ -9,6 +9,7 @@
 - [typescript-eslint](https://github.com/typescript-eslint/typescript-eslint)
 - non-relative paths for all imports
 - automatic build of dependencies defined as TS project references when running dev, etc
+- incremental builds for faster dev rebuilds
 - base tsconfig.json, .eslintrc.js, .prettierrc
 
 ## Getting Started
