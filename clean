@@ -1,0 +1,11 @@
+#! /bin/bash
+rm -rf node_modules
+
+cd src/webapi
+rm -rf node_modules
+
+cd ../lib
+rm -rf node_modules
+
+cd ../..
+./clean-build

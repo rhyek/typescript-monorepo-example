@@ -1,6 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
-import { makeMessage } from '@my/lib';
 
 @Controller()
 export class AppController {
@@ -8,7 +7,6 @@ export class AppController {
 
   @Get()
   getHello(): string {
-    // return this.appService.getHello();
-    return makeMessage();
+    return this.appService.getHello();
   }
 }

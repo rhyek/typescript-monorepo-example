@@ -1,3 +1,3 @@
 export function makeMessage() {
-  return 'Hello, world!';
+  return 'Hello World!';
 }

@@ -4,8 +4,5 @@ module.exports = {
     project: 'tsconfig.json',
     tsconfigRootDir: __dirname,
     sourceType: 'module',
-  },
-  rules: {
-    '@typescript-eslint/no-explicit-any': 'error',
   }
 };
