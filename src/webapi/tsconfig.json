@@ -13,7 +13,14 @@
     "baseUrl": "./",
     "incremental": true,
     "composite": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "src": ["./src"]
+    },
+    "plugins": [
+      { "transform": "typescript-transform-paths" },
+      { "transform": "typescript-transform-paths", "afterDeclarations": true }
+    ]
   },
   "references": [
     { "path": "../lib" }

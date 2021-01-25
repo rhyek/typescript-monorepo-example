@@ -1,1 +1,1 @@
-export * from './functions';
+export * from 'src/functions';
