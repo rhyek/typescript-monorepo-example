@@ -11,6 +11,7 @@
 - automatic build of dependencies defined as TS project references when running dev, etc
 - incremental builds for faster dev rebuilds
 - base tsconfig.json, .eslintrc.js, .prettierrc
+- path alias replacement during compilation based on configured tsconfig paths using ttypescript, and [typescript-transform-paths](https://github.com/LeDDGroup/typescript-transform-paths)
 
 ## Getting Started
 
