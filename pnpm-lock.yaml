@@ -22,6 +22,7 @@ importers:
       eslint: 7.18.0
       jest: 26.6.3
       ts-jest: 26.4.4_94dbca633c657d3c8683abdfd108a56a
+      ttypescript: 1.5.12_typescript@4.2.0-dev.20210124
       typescript: 4.2.0-dev.20210124
       typescript-transform-paths: 2.2.2_typescript@4.2.0-dev.20210124
     specifiers:
@@ -29,6 +30,7 @@ importers:
       eslint: ^7.18.0
       jest: ^26.6.3
       ts-jest: ^26.4.4
+      ttypescript: ^1.5.12
       typescript: ^4.2.0-dev.20210124
       typescript-transform-paths: ^2.2.2
   src/webapi:
@@ -6237,7 +6239,7 @@ packages:
       bs-logger: 0.2.6
       buffer-from: 1.1.1
       fast-json-stable-stringify: 2.1.0
-      jest: 26.6.3_ts-node@9.1.1
+      jest: 26.6.3
       jest-util: 26.6.2
       json5: 2.1.3
       lodash.memoize: 4.1.2
@@ -6342,6 +6344,17 @@ packages:
     dependencies:
       resolve: 1.19.0
       ts-node: 9.1.1_typescript@4.2.0-dev.20210124
+      typescript: 4.2.0-dev.20210124
+    dev: true
+    hasBin: true
+    peerDependencies:
+      ts-node: '>=8.0.2'
+      typescript: '>=3.2.2'
+    resolution:
+      integrity: sha512-1ojRyJvpnmgN9kIHmUnQPlEV1gq+VVsxVYjk/NfvMlHSmYxjK5hEvOOU2MQASrbekTUiUM7pR/nXeCc8bzvMOQ==
+  /ttypescript/1.5.12_typescript@4.2.0-dev.20210124:
+    dependencies:
+      resolve: 1.19.0
       typescript: 4.2.0-dev.20210124
     dev: true
     hasBin: true

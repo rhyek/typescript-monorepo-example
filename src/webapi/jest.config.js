@@ -1,12 +1,7 @@
+const base = require('../../jest.config');
+
 module.exports = {
-  preset: 'ts-jest',
-  globals: {
-    'ts-jest': {
-      compiler: 'ttypescript',
-      tsconfig: 'tsconfig.test.json',
-    },
-  },
-  testEnvironment: 'node',
+  ...base,
   rootDir: 'src',
   testRegex: '.*\\.spec\\.ts$',
 };

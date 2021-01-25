@@ -1,5 +1,7 @@
 # TypeScript monorepo example
 
+The perfect typescript monorepo.
+
 ## Features
 
 - [TypeScript project references](https://www.typescriptlang.org/docs/handbook/project-references.html)
@@ -7,10 +9,10 @@
 - [pnpm](https://pnpm.js.org/)
 - [ttypescript](https://github.com/cevek/ttypescript)
 - [typescript-eslint](https://github.com/typescript-eslint/typescript-eslint)
-- non-relative paths for all imports
 - automatic build of dependencies defined as TS project references when running dev, etc
 - incremental builds for faster dev rebuilds
 - base tsconfig.json, .eslintrc.js, .prettierrc
+- non-relative paths for all imports
 - path alias replacement during compilation based on configured tsconfig paths using ttypescript, and [typescript-transform-paths](https://github.com/LeDDGroup/typescript-transform-paths)
 
 ## Getting Started

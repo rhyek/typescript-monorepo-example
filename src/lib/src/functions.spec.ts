@@ -1,7 +1,7 @@
-import { makeMessage } from './functions';
+import { makeMessage } from 'src/functions';
 
 describe('functions', () => {
-  it('returns a string', () => {
+  it('returns the correct string', () => {
     expect(makeMessage()).toBe('Hello World!');
   });
 });
