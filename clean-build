@@ -1,7 +1,0 @@
-#! /bin/bash
-
-cd src/webapi
-rm -rf build
-
-cd ../lib
-rm -rf build

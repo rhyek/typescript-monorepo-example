@@ -15,5 +15,9 @@
       { "transform": "typescript-transform-paths" },
       { "transform": "typescript-transform-paths", "afterDeclarations": true }
     ]
-  }
+  },
+  "references": [
+    { "path": "./src/lib/tsconfig.build.json" },
+    { "path": "./src/webapi/tsconfig.build.json" }
+  ]
 }

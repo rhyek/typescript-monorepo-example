@@ -6,7 +6,9 @@
     "lint": "pnpm run --parallel --filter ./src/ lint",
     "test": "pnpm run --parallel --filter ./src/ test",
     "test:e2e": "pnpm run --parallel --filter ./src/ test:e2e",
-    "build": "pnpm run --parallel --filter ./src/ build"
+    "build": "pnpm run --parallel --filter ./src/ build",
+    "clean:builds": "tsc -b --clean",
+    "clean:node_modules": "rm -rf ./node_modules src/lib/node_modules src/webapi/node_modules"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.6.1",
