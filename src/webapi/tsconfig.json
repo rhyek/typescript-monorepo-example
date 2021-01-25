@@ -1,26 +1,13 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "module": "commonjs",
-    "declaration": true,
-    "declarationMap": true,
-    "removeComments": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
     "target": "es2017",
-    "sourceMap": true,
     "outDir": "./build",
     "baseUrl": "./",
-    "incremental": true,
-    "composite": true,
-    "skipLibCheck": true,
     "paths": {
       "src": ["./src"]
-    },
-    "plugins": [
-      { "transform": "typescript-transform-paths" },
-      { "transform": "typescript-transform-paths", "afterDeclarations": true }
-    ]
+    }
   },
   "references": [
     { "path": "../lib" }
