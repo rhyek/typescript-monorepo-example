@@ -5,9 +5,14 @@
     "target": "es2017",
     "baseUrl": "./",
     "paths": {
-      "src": ["./src"]
+      "src": ["./src"],
+      "test": ["./test"]
     }
   },
+  "include": [
+    "./src",
+    "./test",
+  ],
   "references": [
     { "path": "../lib" }
   ]
