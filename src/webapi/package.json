@@ -8,8 +8,8 @@
   "scripts": {
     "build": "ttsc --build --force tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "dev": "tsc-watch --compiler ttypescript/bin/tsc -b tsconfig.build.json --onSuccess \"node --inspect build/main\"",
-    "start:prod": "node build/main",
+    "dev": "tsc-watch --compiler ttypescript/bin/tsc -b tsconfig.build.json --onSuccess \"node --inspect dist/main\"",
+    "start:prod": "node dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "test": "ttsc -b tsconfig.test.json && jest",
     "test:watch": "ttsc -b tsconfig.test.json && jest --watch",

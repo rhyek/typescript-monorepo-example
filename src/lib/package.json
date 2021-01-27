@@ -2,8 +2,8 @@
   "name": "@my/lib",
   "version": "1.0.0",
   "description": "",
-  "main": "build/index.js",
-  "types": "build/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "lint": "eslint \"src/**/*.ts\" --fix",
     "test": "jest",
