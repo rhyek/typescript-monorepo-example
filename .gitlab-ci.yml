@@ -38,16 +38,20 @@ test_all:
   curl https://cli-assets.heroku.com/install.sh | sh
   heroku container:login
 
-publish_webapi:
+.publish-app:
   stage: publish
   only:
     - main
-  variables:
-    HEROKU_APP: typescript-monorepo
   script:
     - *setup-heroku
-    - cd src/webapi
+    - cd $APP_PATH
     - heroku container:push --context-path ../../ web
+
+publish_webapi:
+  extends: .publish-app
+  variables:
+    HEROKU_APP: typescript-monorepo
+    APP_PATH: src/webapi
 
 deploy:
   stage: deploy
