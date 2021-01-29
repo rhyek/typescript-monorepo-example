@@ -3,12 +3,6 @@ image: docker:20.10.2
 services:
   - docker:20.10.2-dind
 
-stages:
-  - pre_test
-  - test
-  - publish
-  - deploy
-
 variables:
   NODE_VERSION: 14.15.4
 
@@ -22,68 +16,6 @@ before_script:
   - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/npx /usr/local/bin/npx
   - export PATH=$PATH:$(npm config get prefix)/bin
 
-.test_cache:
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - node_modules/
-      - src/webapi/node_modules/
-      - src/lib/node_modules/
-
-pre_test:
-  stage: pre_test
-  extends: .test_cache
-  only:
-    - merge_requests
-  script:
-    - npm i -g pnpm
-    - pnpm i --frozen-lockfile
-    - apk add --no-cache docker-compose
-
-.test_package:
-  stage: test
-  only:
-    - merge_requests
-  extends: .test_cache
-  script:
-    - npm i -g pnpm
-    - cd $APP_PATH
-    - pnpm test:all
-
-test_lib:
-  extends: .test_package
-  variables:
-    APP_PATH: src/lib
-
-test_webapi:
-  extends: .test_package
-  variables:
-    APP_PATH: src/webapi
-
-# https://gitlab.com/gitlab-org/gitlab/-/issues/16376#note_214904350
-.setup_heroku: &setup_heroku |-
-  curl https://cli-assets.heroku.com/install.sh | sh
-  heroku container:login
-
-.publish_app:
-  stage: publish
-  only:
-    - main
-  script:
-    - *setup_heroku
-    - cd $APP_PATH
-    - heroku container:push --context-path ../../ web
-
-publish_webapi:
-  extends: .publish_app
-  variables:
-    HEROKU_APP: typescript-monorepo
-    APP_PATH: src/webapi
-
-deploy:
-  stage: deploy
-  only:
-    - main
-  script:
-    - *setup_heroku
-    - heroku container:release web --app=typescript-monorepo
+include:
+  - /ci-pipelines/merge-requests.yaml
+  - /ci-pipelines/deployments.yaml
