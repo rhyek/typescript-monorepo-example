@@ -5,6 +5,7 @@ services:
 
 stages:
   - test
+  - publish
   - deploy
 
 before_script:
@@ -33,7 +34,7 @@ test_all:
   heroku container:login
 
 publish_webapi:
-  stage: deploy
+  stage: publish
   only:
     - main
   variables:
