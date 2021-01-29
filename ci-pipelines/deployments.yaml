@@ -1,7 +1,3 @@
-stages:
-  - publish
-  - deploy
-
 # https://gitlab.com/gitlab-org/gitlab/-/issues/16376#note_214904350
 .setup_heroku: &setup_heroku |-
   curl https://cli-assets.heroku.com/install.sh | sh

@@ -3,6 +3,16 @@ image: docker:20.10.2
 services:
   - docker:20.10.2-dind
 
+include:
+  - /ci-pipelines/merge-requests.yaml
+  - /ci-pipelines/deployments.yaml
+
+stages:
+  - pre_test
+  - test
+  - publish
+  - deploy
+
 variables:
   NODE_VERSION: 14.15.4
 
@@ -15,7 +25,3 @@ before_script:
   - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/npm /usr/local/bin/npm
   - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/npx /usr/local/bin/npx
   - export PATH=$PATH:$(npm config get prefix)/bin
-
-include:
-  - /ci-pipelines/merge-requests.yaml
-  - /ci-pipelines/deployments.yaml
