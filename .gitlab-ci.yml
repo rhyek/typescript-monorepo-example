@@ -4,6 +4,7 @@ services:
   - docker:20.10.2-dind
 
 stages:
+  - pre_test
   - test
   - publish
   - deploy
@@ -22,7 +23,7 @@ before_script:
   - export PATH=$PATH:$(npm config get prefix)/bin
 
 pre_test:
-  stage: test
+  stage: pre_test
   only:
     - merge_requests
   cache:
