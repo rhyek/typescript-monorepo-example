@@ -8,14 +8,17 @@ stages:
   - publish
   - deploy
 
+variables:
+  NODE_VERSION: '14.15.4'
+
 before_script:
   - apk update
   - apk add --no-cache curl bash libgcc libstdc++
-  - curl -OJs https://unofficial-builds.nodejs.org/download/release/v14.15.4/node-v14.15.4-linux-x64-musl.tar.xz
-  - tar -xf node-v14.15.4-linux-x64-musl.tar.xz -C /opt
-  - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/node /usr/local/bin/node
-  - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/npm /usr/local/bin/npm
-  - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/npx /usr/local/bin/npx
+  - curl -OJs https://unofficial-builds.nodejs.org/download/release/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64-musl.tar.xz
+  - tar -xf node-v$NODE_VERSION-linux-x64-musl.tar.xz -C /opt
+  - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/node /usr/local/bin/node
+  - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/npm /usr/local/bin/npm
+  - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/npx /usr/local/bin/npx
   - export PATH=$PATH:$(npm config get prefix)/bin
 
 test_all:
