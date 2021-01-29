@@ -31,6 +31,8 @@ deploy:
   only:
     - main
   script:
+    - curl https://cli-assets.heroku.com/install.sh | sh
+    - heroku -v
     - docker build -f src/webapi/Dockerfile --iidfile imageid.txt -t registry.heroku.com/typescript-monorepo/webapi .
     - docker login -u _ -p $HEROKU_TOKEN registry.heroku.com
     - docker push registry.heroku.com/typescript-monorepo/webapi
