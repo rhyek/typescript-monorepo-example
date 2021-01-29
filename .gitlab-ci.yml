@@ -17,7 +17,7 @@ before_script:
   - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/npm /usr/local/bin/npm
   - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/npx /usr/local/bin/npx
 
-.setup_heroku
+.setup_heroku:
   script:
     - curl https://cli-assets.heroku.com/install.sh | sh
     - heroku container:login
