@@ -9,7 +9,9 @@ test_all:
     - merge_requests
   script:
     - pwd
+    - echo $PATH
     - apk update
+    - apk upgrade
     - apk add --no-cache docker-compose
     - apk add --no-cache wget
     - wget https://nodejs.org/dist/v14.15.4/node-v14.15.4-linux-x64.tar.xz && tar -xf node-v14.15.4-linux-x64.tar.xz
