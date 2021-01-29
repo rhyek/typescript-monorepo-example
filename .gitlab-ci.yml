@@ -12,8 +12,8 @@ test_all:
     - apk add --no-cache docker-compose
     - apk add --no-cache wget
     - wget https://nodejs.org/dist/v14.15.4/node-v14.15.4-linux-x64.tar.xz && tar -xf node-v14.15.4-linux-x64.tar.xz
-    - ln -s $(pwd)/node-v14.15.4-linux-x64/bin/node /usr/local/bin/node
-    - ln -s $(pwd)/node-v14.15.4-linux-x64/bin/npm /usr/local/bin/npm
+    - ln -s $(pwd)/node-v14.15.4-linux-x64/bin/node /usr/bin/node
+    - ln -s $(pwd)/node-v14.15.4-linux-x64/bin/npm /usr/bin/npm
     - node -v && npm -v
     - npm i -g pnpm
     - pnpm i --frozen-lockfile
