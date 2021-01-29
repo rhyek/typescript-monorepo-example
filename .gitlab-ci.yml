@@ -29,7 +29,8 @@ pre_test:
   cache:
     key: lol
     paths:
-      - $(npm config get prefix)
+      - /opt/node-v$NODE_VERSION-linux-x64-musl/bin
+      - /opt/node-v$NODE_VERSION-linux-x64-musl/lib
       - node_modules/
       - src/webapi/node_modules/
       - src/lib/node_modules/
