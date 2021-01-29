@@ -5,6 +5,7 @@ services:
 
 stages:
   - test
+  - pre-deploy
   - deploy
 
 test_all:
@@ -12,6 +13,7 @@ test_all:
   only:
     - merge_requests
   script:
+    - apk update
     - apk add --no-cache curl bash libgcc libstdc++ docker-compose
     - curl -OJs https://unofficial-builds.nodejs.org/download/release/v14.15.4/node-v14.15.4-linux-x64-musl.tar.xz
     - tar -xf node-v14.15.4-linux-x64-musl.tar.xz -C /opt
@@ -22,11 +24,12 @@ test_all:
     - pnpm test
     - pnpm test:e2e
 
-deploy:
-  stage: deploy
+setup_heroku:
+  stage: pre-deploy
   only:
     - main
   script:
+    - apk update
     - apk --no-cache add curl bash libgcc libstdc++
     - curl -OJs https://unofficial-builds.nodejs.org/download/release/v14.15.4/node-v14.15.4-linux-x64-musl.tar.xz
     - tar -xf node-v14.15.4-linux-x64-musl.tar.xz -C /opt
@@ -35,6 +38,12 @@ deploy:
     - curl https://cli-assets.heroku.com/install.sh | sh
     - heroku -v
     - heroku container:login
+
+deploy_webapi:
+  stage: deploy
+  only:
+    - main
+  script:
     - cd src/webapi
     - heroku container:push --app=typescript-monorepo --context-path ../../ web
     - heroku container:release web --app=typescript-monorepo
