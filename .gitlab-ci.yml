@@ -8,41 +8,37 @@ stages:
   - pre-deploy
   - deploy
 
+before_script:
+  - apk update
+  - apk add --no-cache curl bash libgcc libstdc++
+  - curl -OJs https://unofficial-builds.nodejs.org/download/release/v14.15.4/node-v14.15.4-linux-x64-musl.tar.xz
+  - tar -xf node-v14.15.4-linux-x64-musl.tar.xz -C /opt
+  - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/node /usr/local/bin/node
+  - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/npm /usr/local/bin/npm
+  - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/npx /usr/local/bin/npx
+
+.setup_heroku
+  script:
+    - curl https://cli-assets.heroku.com/install.sh | sh
+    - heroku container:login
+
 test_all:
   stage: test
   only:
     - merge_requests
   script:
-    - apk update
-    - apk add --no-cache curl bash libgcc libstdc++ docker-compose
-    - curl -OJs https://unofficial-builds.nodejs.org/download/release/v14.15.4/node-v14.15.4-linux-x64-musl.tar.xz
-    - tar -xf node-v14.15.4-linux-x64-musl.tar.xz -C /opt
-    - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/node /usr/local/bin/node
-    - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/npm /usr/local/bin/npm
+    - apk add --no-cache docker-compose
     - npm i -g pnpm
     - pnpm i --frozen-lockfile
     - pnpm test
     - pnpm test:e2e
 
-setup_heroku:
-  stage: pre-deploy
-  only:
-    - main
-  script:
-    - apk update
-    - apk --no-cache add curl bash libgcc libstdc++
-    - curl -OJs https://unofficial-builds.nodejs.org/download/release/v14.15.4/node-v14.15.4-linux-x64-musl.tar.xz
-    - tar -xf node-v14.15.4-linux-x64-musl.tar.xz -C /opt
-    - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/node /usr/local/bin/node
-    - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/npm /usr/local/bin/npm
-    - curl https://cli-assets.heroku.com/install.sh | sh
-    - heroku -v
-    - heroku container:login
-
 deploy_webapi:
   stage: deploy
   only:
     - main
+  extends:
+    - .setup_heroku
   script:
     - cd src/webapi
     - heroku container:push --app=typescript-monorepo --context-path ../../ web
