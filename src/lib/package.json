@@ -6,8 +6,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "lint": "eslint \"src/**/*.ts\" --fix",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "test:unit": "jest",
+    "test:watch": "jest --watch",
+    "test:all": "pnpm lint && pnpm test:unit"
   },
   "keywords": [],
   "author": "",
