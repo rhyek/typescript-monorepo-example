@@ -31,7 +31,7 @@ deploy:
   only:
     - main
   script:
-    - apk --no-cache add curl libgcc libstdc++
+    - apk --no-cache add curl bash libgcc libstdc++
     - curl -OJs https://unofficial-builds.nodejs.org/download/release/v14.15.4/node-v14.15.4-linux-x64-musl.tar.xz
     - tar -xf node-v14.15.4-linux-x64-musl.tar.xz -C /opt
     - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/node /usr/local/bin/node
