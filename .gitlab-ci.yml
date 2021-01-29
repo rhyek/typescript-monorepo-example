@@ -1,0 +1,40 @@
+image: docker:19.03.12
+
+services:
+  - docker:19.03.12-dind
+
+stages:
+  - deploy
+
+# test_all:
+#   stage: test
+#   only:
+#     - merge_requests
+#   script:
+#     - pwd
+#     - echo $PATH
+#     - apk update
+#     - apk upgrade
+#     - apk add --no-cache docker-compose
+#     - apk add --no-cache wget
+#     - wget -q https://nodejs.org/dist/v14.15.4/node-v14.15.4-linux-x64.tar.xz && tar -xf node-v14.15.4-linux-x64.tar.xz
+#     - ln -s $(pwd)/node-v14.15.4-linux-x64/bin/node /usr/bin/node
+#     - ln -s $(pwd)/node-v14.15.4-linux-x64/bin/npm /usr/bin/npm
+#     - node -v && npm -v
+#     - npm i -g pnpm
+#     - pnpm i --frozen-lockfile
+#     - pnpm test
+#     - pnpm test:e2e
+
+deploy:
+  stage: deploy
+  only:
+    - master
+  script:
+    - docker build -f src/webapi/Dockerfile --iidfile imageid.txt -t registry.heroku.com/typescript-monorepo/webapi .
+    - docker login -u _ -p $HEROKU_TOKEN registry.heroku.com
+    - docker push registry.heroku.com/typescript-monorepo/webapi
+    - apk add --no-cache curl
+    - echo "Docker Image ID is $(cat imageid.txt)"
+    - |-
+      curl -X PATCH https://api.heroku.com/apps/typescript-monorepo/formation --header "Content-Type: application/json" --header "Accept: application/vnd.heroku+json; version=3.docker-releases" --header "Authorization: Bearer ${HEROKU_TOKEN}" --data '{ "updates": [ { "type": "web", "docker_image": "'$(cat imageid.txt)'" } ] }'
