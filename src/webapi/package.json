@@ -11,11 +11,12 @@
     "dev": "NODE_ENV=development tsc-watch --compiler ttypescript/bin/tsc -b tsconfig.build.json --onSuccess \"node --inspect dist/main\"",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
-    "test": "ttsc -b tsconfig.test.json && jest",
+    "test:unit": "ttsc -b tsconfig.test.json && jest",
     "test:watch": "ttsc -b tsconfig.test.json && jest --watch",
     "test:cov": "ttsc -b tsconfig.test.json && jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "ttsc -b tsconfig.test.json && jest --config ./test/jest.config.js"
+    "test:e2e": "ttsc -b tsconfig.test.json && jest --config ./test/jest.config.js",
+    "test:all": "pnpm lint && pnpm test:unit && pnpm test:e2e"
   },
   "dependencies": {
     "@my/lib": "workspace:^1.0.0",
