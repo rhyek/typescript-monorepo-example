@@ -2,13 +2,13 @@ image: docker:19.03.12
 
 services:
   - docker:19.03.12-dind
-  - node:14.15-buster-slim
 
 test_all:
   stage: test
   only:
     - merge_requests
   script:
+    - apk add --update nodejs=14.15 npm
     - npm i -g pnpm
     - pnpm i --frozen-lockfile
     - pnpm test
