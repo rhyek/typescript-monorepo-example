@@ -5,7 +5,6 @@ services:
 
 stages:
   - test
-  - pre-deploy
   - deploy
 
 before_script:
@@ -17,10 +16,10 @@ before_script:
   - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/npm /usr/local/bin/npm
   - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/npx /usr/local/bin/npx
 
-.setup_heroku
-  script:
-    - curl https://cli-assets.heroku.com/install.sh | sh
-    - heroku container:login
+# https://gitlab.com/gitlab-org/gitlab/-/issues/16376#note_214904350
+.setup-heroku: &setup-heroku |-
+  curl https://cli-assets.heroku.com/install.sh | sh
+  heroku container:login
 
 test_all:
   stage: test
@@ -33,16 +32,17 @@ test_all:
     - pnpm test
     - pnpm test:e2e
 
-deploy_webapi:
+publish_webapi:
   stage: deploy
   only:
     - main
-  extends:
-    - .setup_heroku
+  variables:
+    HEROKU_APP: typescript-monorepo
   script:
+    - *setup-heroku
     - cd src/webapi
-    - heroku container:push --app=typescript-monorepo --context-path ../../ web
-    - heroku container:release web --app=typescript-monorepo
+    - heroku container:push --context-path ../../ web
+    - heroku container:release web
     # - docker build -f src/webapi/Dockerfile --iidfile imageid.txt -t registry.heroku.com/typescript-monorepo/webapi .
     # - docker login -u _ -p $HEROKU_TOKEN registry.heroku.com
     # - docker push registry.heroku.com/typescript-monorepo/webapi
