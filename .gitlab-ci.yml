@@ -4,27 +4,23 @@ services:
   - docker:19.03.12-dind
 
 stages:
+  - test
   - deploy
 
-# test_all:
-#   stage: test
-#   only:
-#     - merge_requests
-#   script:
-#     - pwd
-#     - echo $PATH
-#     - apk update
-#     - apk upgrade
-#     - apk add --no-cache docker-compose
-#     - apk add --no-cache wget
-#     - wget -q https://nodejs.org/dist/v14.15.4/node-v14.15.4-linux-x64.tar.xz && tar -xf node-v14.15.4-linux-x64.tar.xz
-#     - ln -s $(pwd)/node-v14.15.4-linux-x64/bin/node /usr/bin/node
-#     - ln -s $(pwd)/node-v14.15.4-linux-x64/bin/npm /usr/bin/npm
-#     - node -v && npm -v
-#     - npm i -g pnpm
-#     - pnpm i --frozen-lockfile
-#     - pnpm test
-#     - pnpm test:e2e
+test_all:
+  stage: test
+  only:
+    - merge_requests
+  script:
+    - apk add --no-cache curl bash libgcc libstdc++ docker-compose
+    - curl -OJs https://unofficial-builds.nodejs.org/download/release/v14.15.4/node-v14.15.4-linux-x64-musl.tar.xz
+    - tar -xf node-v14.15.4-linux-x64-musl.tar.xz -C /opt
+    - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/node /usr/local/bin/node
+    - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/npm /usr/local/bin/npm
+    - npm i -g pnpm
+    - pnpm i --frozen-lockfile
+    - pnpm test
+    - pnpm test:e2e
 
 deploy:
   stage: deploy
@@ -38,6 +34,10 @@ deploy:
     - ln -s /opt/node-v14.15.4-linux-x64-musl/bin/npm /usr/local/bin/npm
     - curl https://cli-assets.heroku.com/install.sh | sh
     - heroku -v
+    - heroku container:login
+    - cd src/webapi
+    - heroku container:push --app=typescript-monorepo --context-path ../../ web
+    - heroku container:release web --app=typescript-monorepo
     # - docker build -f src/webapi/Dockerfile --iidfile imageid.txt -t registry.heroku.com/typescript-monorepo/webapi .
     # - docker login -u _ -p $HEROKU_TOKEN registry.heroku.com
     # - docker push registry.heroku.com/typescript-monorepo/webapi
