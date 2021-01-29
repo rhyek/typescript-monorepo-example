@@ -29,15 +29,13 @@ pre_test:
   cache:
     key: lol
     paths:
-      - /opt/node-v$NODE_VERSION-linux-x64-musl/bin
-      - /opt/node-v$NODE_VERSION-linux-x64-musl/lib
       - node_modules/
       - src/webapi/node_modules/
       - src/lib/node_modules/
   script:
-    - apk add --no-cache docker-compose
     - npm i -g pnpm
     - pnpm i --frozen-lockfile
+    - apk add --no-cache docker-compose
 
 .test_package:
   stage: test
@@ -46,6 +44,7 @@ pre_test:
   cache:
     key: lol
   script:
+    - npm i -g pnpm
     - cd $APP_PATH
     - pnpm test:all
 
