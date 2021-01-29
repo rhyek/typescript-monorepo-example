@@ -21,34 +21,58 @@ before_script:
   - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/npx /usr/local/bin/npx
   - export PATH=$PATH:$(npm config get prefix)/bin
 
-test_all:
+pre_test:
   stage: test
   only:
     - merge_requests
+  cache:
+    key: lol
+    paths:
+      - $(npm config get prefix)
+      - node_modules/
+      - src/webapi/node_modules/
+      - src/lib/node_modules/
   script:
+    - apk add --no-cache docker-compose
     - npm i -g pnpm
     - pnpm i --frozen-lockfile
-    - pnpm lint
-    - pnpm test
-    - apk add --no-cache docker-compose
-    - pnpm test:e2e
+
+.test_package:
+  stage: test
+  only:
+    - merge_requests
+  cache:
+    key: lol
+  script:
+    - cd $APP_PATH
+    - pnpm test:all
+
+test_lib:
+  extends: .test_package
+  variables:
+    APP_PATH: src/lib
+
+test_webapi:
+  extends: .test_package
+  variables:
+    APP_PATH: src/webapi
 
 # https://gitlab.com/gitlab-org/gitlab/-/issues/16376#note_214904350
-.setup-heroku: &setup-heroku |-
+.setup_heroku: &setup_heroku |-
   curl https://cli-assets.heroku.com/install.sh | sh
   heroku container:login
 
-.publish-app:
+.publish_app:
   stage: publish
   only:
     - main
   script:
-    - *setup-heroku
+    - *setup_heroku
     - cd $APP_PATH
     - heroku container:push --context-path ../../ web
 
 publish_webapi:
-  extends: .publish-app
+  extends: .publish_app
   variables:
     HEROKU_APP: typescript-monorepo
     APP_PATH: src/webapi
@@ -58,5 +82,5 @@ deploy:
   only:
     - main
   script:
-    - *setup-heroku
+    - *setup_heroku
     - heroku container:release web --app=typescript-monorepo

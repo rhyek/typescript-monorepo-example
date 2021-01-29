@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "pnpm run --parallel --filter ./src/ dev",
     "lint": "pnpm run --parallel --filter ./src/ lint",
-    "test": "pnpm run --parallel --filter ./src/ test",
+    "test:unit": "pnpm run --parallel --filter ./src/ test:unit",
     "test:e2e": "pnpm run --parallel --filter ./src/ test:e2e",
     "build": "pnpm run --parallel --filter ./src/ build",
     "clean:builds": "tsc -b --clean",
