@@ -29,7 +29,7 @@ stages:
 deploy:
   stage: deploy
   only:
-    - master
+    - main
   script:
     - docker build -f src/webapi/Dockerfile --iidfile imageid.txt -t registry.heroku.com/typescript-monorepo/webapi .
     - docker login -u _ -p $HEROKU_TOKEN registry.heroku.com
