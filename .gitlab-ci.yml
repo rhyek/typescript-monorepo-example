@@ -24,9 +24,6 @@ before_script:
   curl -OJs https://unofficial-builds.nodejs.org/download/release/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64-musl.tar.xz
   tar -xf node-v$NODE_VERSION-linux-x64-musl.tar.xz
   mv node-v$NODE_VERSION-linux-x64-musl .node
-  ln -s $(pwd)/.node/bin/node /usr/local/bin/node
-  ln -s $(pwd)/.node/bin/npm /usr/local/bin/npm
-  ln -s $(pwd)/.node/bin/npx /usr/local/bin/npx
 
 ## Tests for merge requests
 
