@@ -20,10 +20,11 @@ before_script:
   - apk update
   - apk add --no-cache curl bash libgcc libstdc++
   - curl -OJs https://unofficial-builds.nodejs.org/download/release/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64-musl.tar.xz
-  - tar -xf node-v$NODE_VERSION-linux-x64-musl.tar.xz -C /opt
-  - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/node /usr/local/bin/node
-  - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/npm /usr/local/bin/npm
-  - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/npx /usr/local/bin/npx
+  - mkdir -p .downloads
+  - tar -xf node-v$NODE_VERSION-linux-x64-musl.tar.xz -C .downloads/
+  - ln -s $(pwd)/.downloads/node-v$NODE_VERSION-linux-x64-musl/bin/node /usr/local/bin/node
+  - ln -s $(pwd)/.downloads/node-v$NODE_VERSION-linux-x64-musl/bin/npm /usr/local/bin/npm
+  - ln -s $(pwd)/.downloads/node-v$NODE_VERSION-linux-x64-musl/bin/npx /usr/local/bin/npx
   - mkdir -p .npm-global
   - npm config set prefix $CI_PROJECT_DIR/.npm-global
   - export PATH=$PATH:$CI_PROJECT_DIR/.npm-global/bin

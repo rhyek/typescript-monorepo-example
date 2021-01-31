@@ -1,6 +1,7 @@
 .test_cache: &test_cache
   key: test-$CI_COMMIT_SHA
   paths:
+    - .downloads
     - .npm-global
     - node_modules/
     - src/webapi/node_modules/
