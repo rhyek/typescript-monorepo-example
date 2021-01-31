@@ -1,7 +1,8 @@
 .test_cache:
   cache:
-    key: ${CI_COMMIT_REF_SLUG}
+    key: test-$CI_COMMIT_REF_SLUG
     paths:
+      - .npm-global
       - node_modules/
       - src/webapi/node_modules/
       - src/lib/node_modules/
@@ -14,24 +15,29 @@ pre_test:
   script:
     - npm i -g pnpm
     - pnpm i --frozen-lockfile
-    - apk add --no-cache docker-compose
 
-.test_package:
+test_libs:
   stage: test
   only:
     - merge_requests
   extends: .test_cache
   script:
     - npm i -g pnpm
-    - cd $APP_PATH
-    - pnpm test:all
+    - (cd src/lib && pnpm lint && pnpm test:unit)
 
-test_lib:
-  extends: .test_package
-  variables:
-    APP_PATH: src/lib
+.test_app:
+  stage: test
+  only:
+    - merge_requests
+  extends: .test_cache
+  script:
+    - apk add --no-cache docker-compose
+    - cd $APP_PATH
+    - pnpm lint
+    - pnpm test:unit
+    - pnpm test:e2e
 
 test_webapi:
-  extends: .test_package
+  extends: .test_app
   variables:
     APP_PATH: src/webapi
