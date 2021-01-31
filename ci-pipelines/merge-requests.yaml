@@ -1,35 +1,38 @@
-.test_cache:
-  cache:
-    key: test-$CI_COMMIT_SHA
-    paths:
-      - .npm-global
-      - node_modules/
-      - src/webapi/node_modules/
-      - src/lib/node_modules/
+.test_cache: &test_cache
+  key: test-$CI_COMMIT_SHA
+  paths:
+    - .npm-global
+    - node_modules/
+    - src/webapi/node_modules/
+    - src/lib/node_modules/
 
 pre_test:
   stage: pre_test
-  extends: .test_cache
   only:
     - merge_requests
+  cache:
+    <<: *test_cache
+    policy: push
   script:
     - npm i -g pnpm
     - pnpm i --frozen-lockfile
 
-test_libs:
+.test_package:
   stage: test
   only:
     - merge_requests
-  extends: .test_cache
+  cache:
+    <<: *test_cache
+    policy: pull
+
+test_libs:
+  extends: .test_package
   script:
     - npm i -g pnpm
     - (cd src/lib && pnpm lint && pnpm test:unit)
 
 .test_app:
-  stage: test
-  only:
-    - merge_requests
-  extends: .test_cache
+  extends: .test_package
   script:
     - apk add --no-cache docker-compose
     - cd $APP_PATH
