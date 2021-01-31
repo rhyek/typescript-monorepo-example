@@ -1,6 +1,6 @@
 .test_cache:
   cache:
-    key: test-$CI_COMMIT_REF_SLUG
+    key: test-$CI_COMMIT_SHA
     paths:
       - .npm-global
       - node_modules/

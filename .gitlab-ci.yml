@@ -24,6 +24,6 @@ before_script:
   - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/node /usr/local/bin/node
   - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/npm /usr/local/bin/npm
   - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/npx /usr/local/bin/npx
-  - mkdir .npm-global
+  - mkdir -p .npm-global
   - npm config set prefix $CI_PROJECT_DIR/.npm-global
   - export PATH=$PATH:$CI_PROJECT_DIR/.npm-global/bin
