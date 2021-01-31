@@ -1,7 +1,10 @@
+include:
+  - /ci-pipelines/common.yaml
+
 .test_cache: &test_cache
   key: test-$CI_COMMIT_SHA
   paths:
-    - .npm-global
+    - .node
     - node_modules/
     - src/webapi/node_modules/
     - src/lib/node_modules/
@@ -14,6 +17,7 @@ pre_test:
     <<: *test_cache
     policy: push
   script:
+    - *pipeline_setup
     - npm i -g pnpm
     - pnpm i --frozen-lockfile
 
@@ -28,7 +32,6 @@ pre_test:
 test_libs:
   extends: .test_package
   script:
-    - npm i -g pnpm
     - (cd src/lib && pnpm lint && pnpm test:unit)
 
 .test_app:
