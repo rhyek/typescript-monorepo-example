@@ -1,11 +1,7 @@
-image: docker:20.10.2
+image: leadgogo/ci:0.1.0
 
 services:
   - docker:20.10.2-dind
-
-include:
-  - /ci-pipelines/merge-requests.yaml
-  - /ci-pipelines/deployments.yaml
 
 stages:
   - pre_test
@@ -13,15 +9,76 @@ stages:
   - publish
   - deploy
 
-variables:
-  NODE_VERSION: 14.15.4
+## Tests for merge requests
 
-before_script:
-  - apk update
-  - apk add --no-cache curl bash libgcc libstdc++
-  - curl -OJs https://unofficial-builds.nodejs.org/download/release/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64-musl.tar.xz
-  - tar -xf node-v$NODE_VERSION-linux-x64-musl.tar.xz -C /opt
-  - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/node /usr/local/bin/node
-  - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/npm /usr/local/bin/npm
-  - ln -s /opt/node-v$NODE_VERSION-linux-x64-musl/bin/npx /usr/local/bin/npx
-  - export PATH=$PATH:$(npm config get prefix)/bin
+.test_cache: &test_cache
+  key: test-$CI_COMMIT_SHA
+  paths:
+    - node_modules/
+    - src/webapi/node_modules/
+    - src/lib/node_modules/
+
+pre_test:
+  stage: pre_test
+  only:
+    - merge_requests
+  cache:
+    <<: *test_cache
+    policy: push
+  script:
+    - pnpm i --frozen-lockfile
+
+.test_package:
+  stage: test
+  only:
+    - merge_requests
+  cache:
+    <<: *test_cache
+    policy: pull
+
+test_libs:
+  extends: .test_package
+  script:
+    - (cd src/lib && pnpm lint && pnpm test:unit)
+
+.test_app:
+  extends: .test_package
+  script:
+    - cd $APP_PATH
+    - pnpm lint
+    - pnpm test:unit
+    - pnpm test:e2e
+
+test_webapi:
+  extends: .test_app
+  variables:
+    APP_PATH: src/webapi
+
+## Deployments on merge
+
+# https://gitlab.com/gitlab-org/gitlab/-/issues/16376#note_214904350
+.setup_heroku: &setup_heroku |-
+  heroku container:login
+
+.publish_app:
+  stage: publish
+  only:
+    - main
+  script:
+    - *setup_heroku
+    - cd $APP_PATH
+    - heroku container:push --context-path ../../ web
+
+publish_webapi:
+  extends: .publish_app
+  variables:
+    HEROKU_APP: typescript-monorepo
+    APP_PATH: src/webapi
+
+deploy:
+  stage: deploy
+  only:
+    - main
+  script:
+    - *setup_heroku
+    - heroku container:release web --app=typescript-monorepo
