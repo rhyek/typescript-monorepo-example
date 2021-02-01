@@ -1,4 +1,4 @@
-image: docker:20.10.2
+image: leadgogo/ci:0.1.0
 
 services:
   - docker:20.10.2-dind
@@ -6,31 +6,14 @@ services:
 stages:
   - pre_test
   - test
-  - pre_publish
   - publish
   - deploy
-
-variables:
-  NODE_VERSION: 14.15.4
-
-## Common stuff
-
-before_script:
-  - apk update
-  - apk add --no-cache curl bash libgcc libstdc++
-  - export PATH=$PATH:$CI_PROJECT_DIR/.node/bin
-
-.pipeline_setup: &pipeline_setup |-
-  curl -OJs https://unofficial-builds.nodejs.org/download/release/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64-musl.tar.xz
-  tar -xf node-v$NODE_VERSION-linux-x64-musl.tar.xz
-  mv node-v$NODE_VERSION-linux-x64-musl .node
 
 ## Tests for merge requests
 
 .test_cache: &test_cache
   key: test-$CI_COMMIT_SHA
   paths:
-    - .node
     - node_modules/
     - src/webapi/node_modules/
     - src/lib/node_modules/
@@ -43,8 +26,6 @@ pre_test:
     <<: *test_cache
     policy: push
   script:
-    - *pipeline_setup
-    - npm i -g pnpm
     - pnpm i --frozen-lockfile
 
 .test_package:
@@ -63,7 +44,6 @@ test_libs:
 .test_app:
   extends: .test_package
   script:
-    - apk add --no-cache docker-compose
     - cd $APP_PATH
     - pnpm lint
     - pnpm test:unit
@@ -76,33 +56,14 @@ test_webapi:
 
 ## Deployments on merge
 
-.deploy_cache: &deploy_cache
-  key: deploy-$CI_COMMIT_SHA
-  paths:
-    - .node
-
-pre_publish:
-  stage: pre_publish
-  only:
-    - main
-  cache:
-    <<: *deploy_cache
-    policy: push
-  script:
-    - *pipeline_setup
-
 # https://gitlab.com/gitlab-org/gitlab/-/issues/16376#note_214904350
 .setup_heroku: &setup_heroku |-
-  curl https://cli-assets.heroku.com/install.sh | sh
   heroku container:login
 
 .publish_app:
   stage: publish
   only:
     - main
-  cache:
-    <<: *deploy_cache
-    policy: pull
   script:
     - *setup_heroku
     - cd $APP_PATH
@@ -118,9 +79,6 @@ deploy:
   stage: deploy
   only:
     - main
-  cache:
-    <<: *deploy_cache
-    policy: pull
   script:
     - *setup_heroku
     - heroku container:release web --app=typescript-monorepo
