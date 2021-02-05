@@ -46,6 +46,7 @@ test_libs:
   script:
     - cd $APP_PATH
     - pnpm lint
+    - pnpm build
     - pnpm test:unit
     - pnpm test:e2e
 
@@ -56,14 +57,21 @@ test_webapi:
 
 ## Deployments on merge
 
+.base_deploy:
+  only:
+    - main
+  environment:
+    name: $CI_COMMIT_REF_NAME
+    # should be production/staging but: https://gitlab.com/gitlab-org/gitlab/-/issues/28380
+    # need to disable outdated deployment jobs feature: https://docs.gitlab.com/ee/ci/pipelines/settings.html#skip-outdated-deployment-jobs
+
 # https://gitlab.com/gitlab-org/gitlab/-/issues/16376#note_214904350
 .setup_heroku: &setup_heroku |-
   heroku container:login
 
 .publish_app:
   stage: publish
-  only:
-    - main
+  extends: .base_deploy
   script:
     - *setup_heroku
     - cd $APP_PATH
@@ -77,8 +85,7 @@ publish_webapi:
 
 deploy:
   stage: deploy
-  only:
-    - main
+  extends: .base_deploy
   script:
     - *setup_heroku
     - heroku container:release web --app=typescript-monorepo
