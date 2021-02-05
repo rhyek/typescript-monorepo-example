@@ -8,12 +8,10 @@ on:
 env:
   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
-defaults:
-  runs-on: ubuntu-20.04
-
 jobs:
   pre-test:
     name: Pre-test
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -30,6 +28,7 @@ jobs:
       - run: pnpm i --frozen-lockfile
   test-libs:
     name: Test libs
+    runs-on: ubuntu-20.04
     needs: [pre-test]
     strategy:
       matrix:
@@ -52,6 +51,7 @@ jobs:
       - run: pnpm test:unit
   test-apps:
     name: Test apps
+    runs-on: ubuntu-20.04
     needs: [pre-test]
     strategy:
       matrix:
