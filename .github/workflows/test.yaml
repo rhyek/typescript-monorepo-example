@@ -5,8 +5,8 @@ on:
     branches:
       - main
 
-env:
-  HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+# env:
+#   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
 jobs:
   pre-test:
@@ -14,17 +14,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '14.15.4'
-      - uses: actions/cache@v2
-        with:
-          path: |
-            node_modules
-            */*/node_modules
-          key: ${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: npm i -g pnpm
-
+      - uses: ./.github/actions/test-setup
       - run: pnpm i --frozen-lockfile
   test-libs:
     name: Test libs
@@ -35,16 +25,7 @@ jobs:
         path: [src/lib]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '14.15.4'
-      - uses: actions/cache@v2
-        with:
-          path: |
-            node_modules
-            */*/node_modules
-          key: ${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: npm i -g pnpm
+      - uses: ./.github/actions/test-setup
 
       - run: cd ${{ matrix.path }}
       - run: pnpm lint
@@ -58,16 +39,7 @@ jobs:
         path: [src/webapi]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '14.15.4'
-      - uses: actions/cache@v2
-        with:
-          path: |
-            node_modules
-            */*/node_modules
-          key: ${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: npm i -g pnpm
+      - uses: ./.github/actions/test-setup
 
       - run: cd ${{ matrix.path }}
       - run: pnpm lint
