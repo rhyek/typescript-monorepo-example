@@ -25,7 +25,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "./.github/prepare.sh && pnpm lint && pnpm test:unit && pnpm test:e2e"
+      "pre-commit": "pnpm lint && pnpm test:unit && pnpm test:e2e && ./.github/prepare.sh"
     }
   }
 }
