@@ -1,46 +1,67 @@
 name: Test workflow
-
-on:
+'on':
   pull_request:
     branches:
       - main
-
-# env:
-#   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-
 jobs:
   pre-test:
     name: Pre-test
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/actions/test-setup
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14.15.4
+      - uses: actions/cache@v2
+        with:
+          path: |
+            **/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: npm i -g pnpm
       - run: pnpm i --frozen-lockfile
   test-libs:
     name: Test libs
     runs-on: ubuntu-20.04
-    needs: [pre-test]
+    needs:
+      - pre-test
     strategy:
       matrix:
-        path: [src/lib]
+        path:
+          - src/lib
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/actions/test-setup
-
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14.15.4
+      - uses: actions/cache@v2
+        with:
+          path: |
+            **/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: npm i -g pnpm
       - run: cd ${{ matrix.path }}
       - run: pnpm lint
       - run: pnpm test:unit
   test-apps:
     name: Test apps
     runs-on: ubuntu-20.04
-    needs: [pre-test]
+    needs:
+      - pre-test
     strategy:
       matrix:
-        path: [src/webapi]
+        path:
+          - src/webapi
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/actions/test-setup
-
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14.15.4
+      - uses: actions/cache@v2
+        with:
+          path: |
+            **/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: npm i -g pnpm
       - run: cd ${{ matrix.path }}
       - run: pnpm lint
       - run: pnpm build
