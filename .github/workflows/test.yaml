@@ -28,6 +28,9 @@ jobs:
       matrix:
         path:
           - src/lib
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -39,7 +42,6 @@ jobs:
             **/node_modules
           key: ${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: npm i -g pnpm
-      - run: cd ${{ matrix.path }}
       - run: pnpm lint
       - run: pnpm test:unit
   test-apps:
@@ -51,6 +53,9 @@ jobs:
       matrix:
         path:
           - src/webapi
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -62,7 +67,6 @@ jobs:
             **/node_modules
           key: ${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: npm i -g pnpm
-      - run: cd ${{ matrix.path }}
       - run: pnpm lint
       - run: pnpm build
       - run: pnpm test:unit

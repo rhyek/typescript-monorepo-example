@@ -35,9 +35,11 @@ jobs:
     strategy:
       matrix:
         path: [src/lib]
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
     steps:
       - *test-setup
-      - run: cd ${{ matrix.path }}
       - run: pnpm lint
       - run: pnpm test:unit
   test-apps:
@@ -47,9 +49,11 @@ jobs:
     strategy:
       matrix:
         path: [src/webapi]
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
     steps:
       - *test-setup
-      - run: cd ${{ matrix.path }}
       - run: pnpm lint
       - run: pnpm build
       - run: pnpm test:unit
