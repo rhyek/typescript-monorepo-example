@@ -64,5 +64,6 @@ jobs:
       - run: npm i -g pnpm
       - run: cd ${{ matrix.path }}
       - run: pnpm lint
+      - run: pnpm build
       - run: pnpm test:unit
       - run: pnpm test:e2e
