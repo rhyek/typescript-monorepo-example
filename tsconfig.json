@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
     "strict": true,
+    "module": "commonjs",
+    "target": "es2019",
+    "lib": ["es2019"],
     "composite": true,
     "incremental": true,
     "sourceMap": true,
@@ -17,6 +20,7 @@
     ]
   },
   "references": [
+    { "path": "./src/lib/tsconfig.build.json" },
     { "path": "./src/webapi/tsconfig.build.json" }
   ]
 }
