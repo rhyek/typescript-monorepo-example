@@ -19,12 +19,12 @@ function flattenSteps(obj: object) {
   }
 }
 
-const srcDir = path.resolve(__dirname, './workflows-src');
+const srcDir = path.resolve(__dirname, './workflows');
 const files = fs.readdirSync(srcDir);
 const outFiles = [];
 for (const file of files) {
   const srcFile = path.resolve(srcDir, file);
-  const outFile = path.resolve(__dirname, './workflows', file);
+  const outFile = path.resolve(__dirname, '../.github/workflows', file);
   const doc = yaml.load(fs.readFileSync(srcFile, 'utf8'));
   if (typeof doc !== 'object' || doc === null) {
     throw new Error(`Invalid type for document: ${typeof doc}`);
