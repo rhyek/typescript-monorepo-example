@@ -2,6 +2,7 @@
   "compilerOptions": {
     "strict": true,
     "module": "commonjs",
+    "target": "es2019",
     "lib": ["es2019"],
     "composite": true,
     "incremental": true,
