@@ -39,8 +39,7 @@ jobs:
     needs: [publish-apps]
     steps:
       - *setup
-      # - run: heroku container:release web --app=$WEB_API_APP
-      - run: heroku container:release web --app=xxx
+      - run: heroku container:release web --app=$WEB_API_APP
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         if: ${{ always() }}
