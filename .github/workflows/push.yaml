@@ -25,7 +25,9 @@ jobs:
           node-version: 14.15.4
       - run: curl -s https://cli-assets.heroku.com/install.sh | sh
       - run: heroku container:login
-      - run: heroku container:push --app=error --context-path=../../ web
+      - run: >-
+          heroku container:push --app=${{ env[matrix.heroku_app_key] }}
+          --context-path=../../ web
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         if: ${{ cancelled() || failure() }}
@@ -47,7 +49,7 @@ jobs:
           node-version: 14.15.4
       - run: curl -s https://cli-assets.heroku.com/install.sh | sh
       - run: heroku container:login
-      - run: heroku container:release web --app=$WEB_API_APP
+      - run: heroku container:release web --app=error
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         if: ${{ always() }}

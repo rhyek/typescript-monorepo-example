@@ -40,8 +40,8 @@ jobs:
         working-directory: ${{ matrix.path }}
     steps:
       - *setup
-      # - run: heroku container:push --app=${{ env[matrix.heroku_app_key] }} --context-path=../../ web
-      - run: heroku container:push --app=error --context-path=../../ web
+      - run: heroku container:push --app=${{ env[matrix.heroku_app_key] }} --context-path=../../ web
+      # - run: heroku container:push --app=error --context-path=../../ web
       - <<: *report
 
   deploy-apps:
@@ -50,7 +50,7 @@ jobs:
     needs: [publish-apps]
     steps:
       - *setup
-      - run: heroku container:release web --app=$WEB_API_APP
-      # - run: heroku container:release web --app=error
+      # - run: heroku container:release web --app=$WEB_API_APP
+      - run: heroku container:release web --app=error
       - <<: *report
         if: ${{ always() }}
