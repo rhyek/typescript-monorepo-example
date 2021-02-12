@@ -1,4 +1,4 @@
-name: Test workflow
+name: Tests
 
 on:
   pull_request:
@@ -17,9 +17,6 @@ anchors:
           **/node_modules
         key: ${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
     - run: npm i -g pnpm
-
-# env:
-#   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
 jobs:
   pre-test:

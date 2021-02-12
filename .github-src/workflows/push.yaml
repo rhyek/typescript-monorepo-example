@@ -1,0 +1,42 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+  WEB_API_APP: typescript-monorepo
+
+anchors:
+  setup: &setup
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '14.15.4'
+    - run: curl -s https://cli-assets.heroku.com/install.sh | sh
+    - run: heroku container:login
+
+jobs:
+  publish-apps:
+    name: Publish apps
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        include:
+          - path: src/webapi
+            heroku_app_key: WEB_API_APP
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
+    steps:
+      - *setup
+      - run: heroku container:push --app=${{ env[matrix.heroku_app_key] }} --context-path=../../ web
+  deploy-apps:
+    name: Deploy apps
+    runs-on: ubuntu-20.04
+    needs: [publish-apps]
+    steps:
+      - *setup
+      - run: heroku container:release web --app=$WEB_API_APP
