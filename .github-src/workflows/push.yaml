@@ -32,7 +32,8 @@ jobs:
         working-directory: ${{ matrix.path }}
     steps:
       - *setup
-      - run: heroku container:push --app=${{ env[matrix.heroku_app_key] }} --context-path=../../ web
+      # - run: heroku container:push --app=${{ env[matrix.heroku_app_key] }} --context-path=../../ web
+      - run: heroku container:push --app=xxxx --context-path=../../ web
   deploy-apps:
     name: Deploy apps
     runs-on: ubuntu-20.04
