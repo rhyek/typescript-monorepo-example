@@ -38,10 +38,12 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [publish-apps]
     steps:
-      - *setup
+      # - *setup
       - run: heroku container:release web --app=$WEB_API_APP
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
+        if: ${{ always() }}
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_USERNAME: github-actions
+          SLACK_COLOR: ${{ job.status == 'success' && 'good' || job.status == 'cancelled' && '#808080' || 'danger' }}

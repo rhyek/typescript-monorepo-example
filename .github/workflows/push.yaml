@@ -34,15 +34,13 @@ jobs:
     needs:
       - publish-apps
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: 14.15.4
-      - run: curl -s https://cli-assets.heroku.com/install.sh | sh
-      - run: heroku container:login
       - run: heroku container:release web --app=$WEB_API_APP
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
+        if: ${{ always() }}
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_USERNAME: github-actions
+          SLACK_COLOR: >-
+            ${{ job.status == 'success' && 'good' || job.status == 'cancelled'
+            && '#808080' || 'danger' }}
