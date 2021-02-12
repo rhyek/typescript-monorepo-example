@@ -6,6 +6,7 @@ name: Build and Deploy
 env:
   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
   WEB_API_APP: typescript-monorepo
+  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 jobs:
   publish-apps:
     name: Publish apps
@@ -41,3 +42,7 @@ jobs:
       - run: curl -s https://cli-assets.heroku.com/install.sh | sh
       - run: heroku container:login
       - run: heroku container:release web --app=$WEB_API_APP
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
