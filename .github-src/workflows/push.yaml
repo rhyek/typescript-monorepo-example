@@ -50,7 +50,7 @@ jobs:
     needs: [publish-apps]
     steps:
       - *setup
-      # - run: heroku container:release web --app=$WEB_API_APP
-      - run: heroku container:release web --app=error
+      - run: heroku container:release web --app=$WEB_API_APP
+      # - run: heroku container:release web --app=error
       - <<: *report
         if: ${{ always() }}

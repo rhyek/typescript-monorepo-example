@@ -49,7 +49,7 @@ jobs:
           node-version: 14.15.4
       - run: curl -s https://cli-assets.heroku.com/install.sh | sh
       - run: heroku container:login
-      - run: heroku container:release web --app=error
+      - run: heroku container:release web --app=$WEB_API_APP
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         if: ${{ always() }}
