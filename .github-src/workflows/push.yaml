@@ -18,13 +18,13 @@ anchors:
     - run: curl -s https://cli-assets.heroku.com/install.sh | sh
     - run: heroku container:login
   report: &report
-    - name: Slack Notification
-      uses: rtCamp/action-slack-notify@v2
-      if: ${{ always() }}
-      env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_USERNAME: github-actions
-        SLACK_COLOR: ${{ job.status == 'success' && 'good' || 'danger' }}
+    name: Slack Notification
+    uses: rtCamp/action-slack-notify@v2
+    if: ${{ cancelled() || failure() }}
+    env:
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      SLACK_USERNAME: github-actions
+      SLACK_COLOR: ${{ job.status == 'success' && 'good' || job.status == 'cancelled' && '#808080' || 'danger' }}
 
 jobs:
   publish-apps:
@@ -42,7 +42,8 @@ jobs:
       - *setup
       # - run: heroku container:push --app=${{ env[matrix.heroku_app_key] }} --context-path=../../ web
       - run: heroku container:push --app=error --context-path=../../ web
-      - *report
+      - <<: *report
+
   deploy-apps:
     name: Deploy apps
     runs-on: ubuntu-20.04
@@ -51,4 +52,5 @@ jobs:
       - *setup
       - run: heroku container:release web --app=$WEB_API_APP
       # - run: heroku container:release web --app=error
-      - *report
+      - <<: *report
+        if: ${{ always() }}
