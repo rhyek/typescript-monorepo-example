@@ -39,12 +39,19 @@ jobs:
       - run: curl -s https://cli-assets.heroku.com/install.sh | sh
       - run: heroku container:login
       - run: heroku container:release web --app=$WEB_API_APP
+  report:
+    name: Report to Slack
+    runs-on: ubuntu-20.04
+    needs:
+      - publish-apps
+      - deploy-apps
+    if: ${{ always() }}
+    steps:
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
-        if: ${{ always() }}
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_USERNAME: github-actions
           SLACK_COLOR: >-
-            ${{ job.status == 'success' && 'good' || job.status == 'cancelled'
-            && '#808080' || 'danger' }}
+            ${{ needs.publish-apps.result == 'success' &&
+            needs.deploy-apps.result == 'success' && 'good' || 'danger' }}
