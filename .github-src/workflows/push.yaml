@@ -25,7 +25,6 @@ anchors:
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       SLACK_USERNAME: github-actions
       SLACK_COLOR: ${{ job.status == 'success' && 'good' || job.status == 'cancelled' && '#808080' || 'danger' }}
-      SLACK_CHANNEL: tests
 
 jobs:
   publish-apps:
