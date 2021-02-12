@@ -25,7 +25,9 @@ jobs:
           node-version: 14.15.4
       - run: curl -s https://cli-assets.heroku.com/install.sh | sh
       - run: heroku container:login
-      - run: heroku container:push --app=xxxx --context-path=../../ web
+      - run: >-
+          heroku container:push --app=${{ env[matrix.heroku_app_key] }}
+          --context-path=../../ web
   deploy-apps:
     name: Deploy apps
     runs-on: ubuntu-20.04
@@ -38,7 +40,7 @@ jobs:
           node-version: 14.15.4
       - run: curl -s https://cli-assets.heroku.com/install.sh | sh
       - run: heroku container:login
-      - run: heroku container:release web --app=$WEB_API_APP
+      - run: heroku container:release web --app=xxx
   report:
     name: Report to Slack
     runs-on: ubuntu-20.04
