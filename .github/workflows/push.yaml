@@ -37,6 +37,7 @@ jobs:
           SLACK_COLOR: >-
             ${{ job.status == 'success' && 'good' || job.status == 'cancelled'
             && '#808080' || 'danger' }}
+          SLACK_CHANNEL: tests
   deploy-apps:
     name: Deploy apps
     runs-on: ubuntu-20.04
@@ -59,3 +60,4 @@ jobs:
           SLACK_COLOR: >-
             ${{ job.status == 'success' && 'good' || job.status == 'cancelled'
             && '#808080' || 'danger' }}
+          SLACK_CHANNEL: tests
