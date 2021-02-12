@@ -25,9 +25,7 @@ jobs:
           node-version: 14.15.4
       - run: curl -s https://cli-assets.heroku.com/install.sh | sh
       - run: heroku container:login
-      - run: >-
-          heroku container:push --app=${{ env[matrix.heroku_app_key] }}
-          --context-path=../../ web
+      - run: heroku container:push --app=xxx --context-path=../../ web
   deploy-apps:
     name: Deploy apps
     runs-on: ubuntu-20.04
@@ -41,19 +39,24 @@ jobs:
       - run: curl -s https://cli-assets.heroku.com/install.sh | sh
       - run: heroku container:login
       - run: heroku container:release web --app=$WEB_API_APP
-  report:
-    name: Report to Slack
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        if: ${{ success() }}
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_USERNAME: github-actions
+          SLACK_COLOR: good
+  report-failure:
+    name: Report failure
     runs-on: ubuntu-20.04
     needs:
       - publish-apps
       - deploy-apps
-    if: ${{ always() }}
+    if: ${{ failure() }}
     steps:
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_USERNAME: github-actions
-          SLACK_COLOR: >-
-            ${{ needs.publish-apps.result == 'success' &&
-            needs.deploy-apps.result == 'success' && 'good' || 'danger' }}
+          SLACK_COLOR: danger
