@@ -11,6 +11,10 @@ anchors:
     - uses: actions/setup-node@v2
       with:
         node-version: '14.15.4'
+    - uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-tests-npm
     - run: npm i -g pnpm
   node-modules-cache: &node-modules-cache
     uses: actions/cache@v2
