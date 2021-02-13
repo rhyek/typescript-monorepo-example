@@ -11,12 +11,27 @@ anchors:
     - uses: actions/setup-node@v2
       with:
         node-version: '14.15.4'
-    - name: Cache npm
+    - name: Set global npm folder
+      run: |
+        mkdir ~/.npm-global
+        npm config set prefix '~/.npm-global'
+        echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
+    - name: Cache npm global folder
+      id: cache-npm-global
       uses: actions/cache@v2
       with:
-        path: ~/.npm
-        key: ${{ runner.os }}-tests-npm
-    - run: npm i -g pnpm
+        path: ~/.npm-global
+        key: ${{ runner.os }}-tests-npm-global
+    - name: Install global node packages
+      if: steps.cache-npm-global.outputs.cache-hit != 'true'
+      run: |
+        npm i -g pnpm
+    # - name: Cache npm
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: ~/.npm
+    #     key: ${{ runner.os }}-tests-npm
+    # - run: npm i -g pnpm
   node-modules-cache: &node-modules-cache
     uses: actions/cache@v2
     with:
