@@ -27,7 +27,7 @@ jobs:
         if: steps.cache-npm-global.outputs.cache-hit != 'true'
         run: |
           npm i -g pnpm
-      - name: pnpm store cache
+      - name: Cache pnpm store
         uses: actions/cache@v2
         with:
           path: ~/.pnpm-store

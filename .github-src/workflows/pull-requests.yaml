@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - *test-setup
-      - name: pnpm store cache
+      - name: Cache pnpm store
         uses: actions/cache@v2
         with:
           path: ~/.pnpm-store
