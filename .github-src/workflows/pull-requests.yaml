@@ -11,13 +11,12 @@ anchors:
     - uses: actions/setup-node@v2
       with:
         node-version: '14.15.4'
-    - uses: actions/cache@v2
-      with:
-        path: ~/.pnpm-store
-        key: ${{ runner.os }}-tests-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-tests-pnpm-
     - run: npm i -g pnpm
+  node-modules-cache: &node-modules-cache
+    uses: actions/cache@v2
+    with:
+      path: '**/node_modules'
+      key: ${{ runner.os }}-tests-node-modules-${{ env.GITHUB_SHA }}
 
 jobs:
   pre-test:
@@ -25,6 +24,14 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - *test-setup
+      - name: pnpm store cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-tests-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-tests-pnpm-store-
+      - <<: *node-modules-cache
       - run: pnpm i --frozen-lockfile
   test-libs:
     name: Test libs
@@ -38,6 +45,7 @@ jobs:
         working-directory: ${{ matrix.path }}
     steps:
       - *test-setup
+      - <<: *node-modules-cache
       - run: pnpm lint
       - run: pnpm test:unit
   test-apps:
@@ -52,6 +60,7 @@ jobs:
         working-directory: ${{ matrix.path }}
     steps:
       - *test-setup
+      - <<: *node-modules-cache
       - run: pnpm lint
       - run: pnpm build
       - run: pnpm test:unit
