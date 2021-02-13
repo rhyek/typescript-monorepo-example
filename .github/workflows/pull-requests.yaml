@@ -14,9 +14,10 @@ jobs:
           node-version: 14.15.4
       - uses: actions/cache@v2
         with:
-          path: |
-            **/node_modules
-          key: ${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-tests-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-tests-pnpm-
       - run: npm i -g pnpm
       - run: pnpm i --frozen-lockfile
   test-libs:
@@ -38,9 +39,10 @@ jobs:
           node-version: 14.15.4
       - uses: actions/cache@v2
         with:
-          path: |
-            **/node_modules
-          key: ${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-tests-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-tests-pnpm-
       - run: npm i -g pnpm
       - run: pnpm lint
       - run: pnpm test:unit
@@ -63,9 +65,10 @@ jobs:
           node-version: 14.15.4
       - uses: actions/cache@v2
         with:
-          path: |
-            **/node_modules
-          key: ${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-tests-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-tests-pnpm-
       - run: npm i -g pnpm
       - run: pnpm lint
       - run: pnpm build
