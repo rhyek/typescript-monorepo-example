@@ -9,8 +9,7 @@ env:
   DOCKER_BUILDKIT: 1
 
 anchors:
-  test-setup: &test-setup
-    - uses: actions/checkout@v2
+  pnpm-setup: &pnpm-setup
     - uses: actions/setup-node@v2
       with:
         node-version: '14.15.4'
@@ -40,7 +39,7 @@ jobs:
     name: Pre-test
     runs-on: ubuntu-20.04
     steps:
-      - *test-setup
+      - *pnpm-setup
       - name: Cache pnpm store
         uses: actions/cache@v2
         with:
@@ -49,8 +48,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-tests-pnpm-store-
       - <<: *node-modules-cache
+      - uses: actions/checkout@v2
       - run: pnpm i --frozen-lockfile
-      - run: echo $GITHUB_SHA
   unit-tests:
     name: Unit tests
     runs-on: ubuntu-20.04
@@ -62,7 +61,7 @@ jobs:
       run:
         working-directory: ${{ matrix.path }}
     steps:
-      - *test-setup
+      - *pnpm-setup
       - <<: *node-modules-cache
       - run: pnpm lint
       - run: pnpm test:unit
@@ -105,6 +104,6 @@ jobs:
       run:
         working-directory: ${{ matrix.path }}
     steps:
-      - *test-setup
+      - *pnpm-setup
       - <<: *node-modules-cache
       - run: pnpm test:e2e
