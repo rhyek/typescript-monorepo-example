@@ -119,7 +119,8 @@ jobs:
           key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
       - run: pnpm lint
       - run: pnpm test:unit
-      - run: >-
+      - name: Docker login
+        run: >-
           echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com
           -u $GITHUB_ACTOR --password-stdin
       - run: >-
@@ -131,13 +132,13 @@ jobs:
       - name: Build docker image
         run: |
           docker build \
-            -t $IMAGE:$GITHUB_SHA \
+            -t ${{ env.IMAGE }}:${{ github.sha }} \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --cache-from=$IMAGE:latest \
-            --cache-from=$IMAGE:$GITHUB_SHA \
+            --cache-from={{ env.IMAGE }}:latest \
+            --cache-from={{ env.IMAGE }}:${{ github.sha }} \
             -f ./Dockerfile \
             ../../
-      - run: docker push $IMAGE:$GITHUB_SHA
+      - run: docker push {{ env.IMAGE }}:${{ github.sha }}
   apps-integration-tests:
     name: 'Apps: integration tests'
     runs-on: ubuntu-20.04
