@@ -123,12 +123,12 @@ jobs:
       - run: pnpm test:unit
       - name: Docker login
         run: >-
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com
-          -u $GITHUB_ACTOR --password-stdin
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
+          --password-stdin
       - name: Set environment variables
         run: >
-          echo "IMAGE=docker.pkg.github.com/$GITHUB_REPOSITORY/${{
-          matrix.app-name }}" >> $GITHUB_ENV
+          echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ matrix.app-name }}" >>
+          $GITHUB_ENV
       - name: Build docker image
         run: |
           docker build \
