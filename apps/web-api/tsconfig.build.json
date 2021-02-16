@@ -8,6 +8,6 @@
   "include": ["./src"],
   "exclude": ["**/*.spec.ts"],
   "references": [
-    { "path": "../lib/tsconfig.build.json" }
+    { "path": "../../shared/lib/tsconfig.build.json" }
   ]
 }

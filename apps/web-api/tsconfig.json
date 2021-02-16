@@ -12,6 +12,6 @@
     "./test",
   ],
   "references": [
-    { "path": "../lib" }
+    { "path": "../../shared/lib" }
   ]
 }
