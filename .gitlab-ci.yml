@@ -15,7 +15,7 @@ stages:
   key: test-$CI_COMMIT_SHA
   paths:
     - node_modules/
-    - src/webapi/node_modules/
+    - src/web-api/node_modules/
     - src/lib/node_modules/
 
 pre_test:
@@ -50,10 +50,10 @@ test_libs:
     - pnpm test:unit
     - pnpm test:e2e
 
-test_webapi:
+test_web_api:
   extends: .test_app
   variables:
-    APP_PATH: src/webapi
+    APP_PATH: src/web-api
 
 ## Deployments on merge
 
@@ -77,11 +77,11 @@ test_webapi:
     - cd $APP_PATH
     - heroku container:push --context-path ../../ web
 
-publish_webapi:
+publish_web_api:
   extends: .publish_app
   variables:
     HEROKU_APP: typescript-monorepo
-    APP_PATH: src/webapi
+    APP_PATH: src/web-api
 
 deploy:
   stage: deploy

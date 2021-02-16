@@ -41,7 +41,7 @@ importers:
       ttypescript: ^1.5.12
       typescript: ^4.2.0-dev.20210124
       typescript-transform-paths: ^2.2.2
-  src/webapi:
+  src/web-api:
     dependencies:
       '@my/lib': link:../lib
       '@nestjs/common': 7.6.5_0c773f197e7bb0df0bedc332ad8bc35d
@@ -1127,8 +1127,8 @@ packages:
         optional: true
     resolution:
       integrity: sha512-IJ5e2W7uFNfg4qh9eHkHRUCbgZ8VKtGwD07kannJvM5t/GU8P8+24NX8gi3Hf5jST5oWPY8kyV1s/WtfiZ4+Ww==
-  /@typescript-eslint/experimental-utils/4.14.0_522781a0d4040bb3c9c4dc6d217b949c:
-    dependencies:
+  ? /@typescript-eslint/experimental-utils/4.14.0_522781a0d4040bb3c9c4dc6d217b949c
+  : dependencies:
       '@types/json-schema': 7.0.7
       '@typescript-eslint/scope-manager': 4.14.0
       '@typescript-eslint/types': 4.14.0

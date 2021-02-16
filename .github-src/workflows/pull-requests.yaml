@@ -26,17 +26,11 @@ anchors:
       if: steps.cache-npm-global.outputs.cache-hit != 'true'
       run: |
         npm i -g pnpm
-    # - name: Cache npm
-    #   uses: actions/cache@v2
-    #   with:
-    #     path: ~/.npm
-    #     key: ${{ runner.os }}-tests-npm
-    # - run: npm i -g pnpm
   node-modules-cache: &node-modules-cache
     uses: actions/cache@v2
     with:
       path: '**/node_modules'
-      key: ${{ runner.os }}-tests-node-modules-${{ env.GITHUB_SHA }}
+      key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
 
 jobs:
   pre-test:
@@ -53,6 +47,7 @@ jobs:
             ${{ runner.os }}-tests-pnpm-store-
       - <<: *node-modules-cache
       - run: pnpm i --frozen-lockfile
+      - run: echo $GITHUB_SHA
   test-libs:
     name: Test libs
     runs-on: ubuntu-20.04
@@ -68,13 +63,15 @@ jobs:
       - <<: *node-modules-cache
       - run: pnpm lint
       - run: pnpm test:unit
-  test-apps:
-    name: Test apps
+  apps-unit-tests-and-build:
+    name: 'Apps: unit tests and build'
     runs-on: ubuntu-20.04
     needs: [pre-test]
     strategy:
       matrix:
-        path: [src/webapi]
+        include:
+          - app-name: web-api
+          - path: src/web-api
     defaults:
       run:
         working-directory: ${{ matrix.path }}
@@ -82,6 +79,36 @@ jobs:
       - *test-setup
       - <<: *node-modules-cache
       - run: pnpm lint
-      - run: pnpm build
       - run: pnpm test:unit
-      - run: pnpm test:e2e
+      - run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+      - run: echo "IMAGE=docker.pkg.github.com/$GITHUB_REPOSITORY/${{ matrix.app-name }}" >> $GITHUB_ENV
+      - uses: docker/setup-buildx-action@v1
+        with:
+          install: true
+      # - run: docker pull $IMAGE:latest || true
+      - name: Build docker image
+        run: |
+          docker build \
+            -t $IMAGE:$GITHUB_SHA \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --cache-from=$IMAGE:latest \
+            --cache-from=$IMAGE:$GITHUB_SHA \
+            -f ./Dockerfile \
+            ../../
+      - run: docker push $IMAGE:$GITHUB_SHA
+  apps-integration-tests:
+    name: 'Apps: integration tests'
+    runs-on: ubuntu-20.04
+    needs: [apps-unit-tests-and-build]
+    strategy:
+      matrix:
+        include:
+          - app-name: web-api
+          - path: src/web-api
+    defaults:
+      run:
+        working-directory: ${{ matrix.path }}
+    steps:
+      - *test-setup
+      - <<: *node-modules-cache
+      - run: pnpm:e2e

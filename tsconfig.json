@@ -21,6 +21,6 @@
   },
   "references": [
     { "path": "./src/lib/tsconfig.build.json" },
-    { "path": "./src/webapi/tsconfig.build.json" }
+    { "path": "./src/web-api/tsconfig.build.json" }
   ]
 }

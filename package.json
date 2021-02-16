@@ -8,7 +8,7 @@
     "test:e2e": "pnpm run --parallel --filter ./src/ test:e2e",
     "build": "pnpm run --parallel --filter ./src/ build",
     "clean:builds": "tsc -b --clean",
-    "clean:node_modules": "rm -rf ./node_modules src/lib/node_modules src/webapi/node_modules"
+    "clean:node_modules": "rm -rf ./node_modules src/lib/node_modules src/web-api/node_modules"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.0",
