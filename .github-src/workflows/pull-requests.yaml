@@ -91,8 +91,8 @@ jobs:
           docker build \
             -t ${{ env.IMAGE }}:${{ github.sha }} \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --cache-from={{ env.IMAGE }}:latest \
-            --cache-from={{ env.IMAGE }}:${{ github.sha }} \
+            --cache-from=${{ env.IMAGE }}:latest \
+            --cache-from=${{ env.IMAGE }}:${{ github.sha }} \
             -f ./Dockerfile \
             ../../
       - run: docker push {{ env.IMAGE }}:${{ github.sha }}
