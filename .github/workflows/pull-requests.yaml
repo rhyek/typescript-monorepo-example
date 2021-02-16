@@ -138,7 +138,7 @@ jobs:
             --cache-from=${{ env.IMAGE }}:${{ github.sha }} \
             -f ./Dockerfile \
             ../../
-      - run: docker push {{ env.IMAGE }}:${{ github.sha }}
+      - run: docker push ${{ env.IMAGE }}:${{ github.sha }}
   apps-integration-tests:
     name: 'Apps: integration tests'
     runs-on: ubuntu-20.04
