@@ -3,6 +3,8 @@ name: Tests
   pull_request:
     branches:
       - main
+env:
+  DOCKER_BUILDKIT: 1
 jobs:
   pre-test:
     name: Pre-test
@@ -125,8 +127,6 @@ jobs:
           -u $GITHUB_ACTOR --password-stdin
       - name: Set environment variables
         run: >
-          echo "DOCKER_BUILDKIT=1" >> $GITHUB_ENV
-
           echo "IMAGE=docker.pkg.github.com/$GITHUB_REPOSITORY/${{
           matrix.app-name }}" >> $GITHUB_ENV
       - name: Build docker image
@@ -138,7 +138,8 @@ jobs:
             --cache-from=${{ env.IMAGE }}:${{ github.sha }} \
             -f ./Dockerfile \
             ../../
-      - run: docker push ${{ env.IMAGE }}:${{ github.sha }}
+      - name: Docker push
+        run: docker push ${{ env.IMAGE }}:${{ github.sha }}
   apps-integration-tests:
     name: 'Apps: integration tests'
     runs-on: ubuntu-20.04
@@ -176,4 +177,4 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
-      - run: pnpm:e2e
+      - run: pnpm test:e2e

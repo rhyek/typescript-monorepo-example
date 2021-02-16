@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  DOCKER_BUILDKIT: 1
+
 anchors:
   test-setup: &test-setup
     - uses: actions/checkout@v2
@@ -84,7 +87,6 @@ jobs:
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
       - name: Set environment variables
         run: |
-          echo "DOCKER_BUILDKIT=1" >> $GITHUB_ENV
           echo "IMAGE=docker.pkg.github.com/$GITHUB_REPOSITORY/${{ matrix.app-name }}" >> $GITHUB_ENV
       # - uses: docker/setup-buildx-action@v1
       #   with:
@@ -98,7 +100,8 @@ jobs:
             --cache-from=${{ env.IMAGE }}:${{ github.sha }} \
             -f ./Dockerfile \
             ../../
-      - run: docker push ${{ env.IMAGE }}:${{ github.sha }}
+      - name: Docker push
+        run: docker push ${{ env.IMAGE }}:${{ github.sha }}
   apps-integration-tests:
     name: 'Apps: integration tests'
     runs-on: ubuntu-20.04
@@ -114,4 +117,4 @@ jobs:
     steps:
       - *test-setup
       - <<: *node-modules-cache
-      - run: pnpm:e2e
+      - run: pnpm test:e2e
