@@ -127,7 +127,7 @@ jobs:
         run: >
           echo "DOCKER_BUILDKIT=1" >> $GITHUB_ENV
 
-          echo "IMAGE=docker.pkg.github.com/$GITHUB_REPOSITORY-${{
+          echo "IMAGE=docker.pkg.github.com/$GITHUB_REPOSITORY/${{
           matrix.app-name }}" >> $GITHUB_ENV
       - name: Build docker image
         run: |
