@@ -33,7 +33,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - path: src/webapi
+          - path: src/web-api
             heroku_app_key: WEB_API_APP
     defaults:
       run:
