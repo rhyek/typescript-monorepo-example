@@ -89,7 +89,7 @@ jobs:
       matrix:
         include:
           - app-name: web-api
-          - path: src/web-api
+            path: src/web-api
     defaults:
       run:
         working-directory: ${{ matrix.path }}
@@ -147,7 +147,7 @@ jobs:
       matrix:
         include:
           - app-name: web-api
-          - path: src/web-api
+            path: src/web-api
     defaults:
       run:
         working-directory: ${{ matrix.path }}
