@@ -5,13 +5,15 @@
   "scripts": {
     "lint": "pnpm run lint --parallel  --parseable --filter \"@my/*[$(git rev-parse HEAD)]\"",
     "build-necessary-libs": "pnpm exec --parallel --parseable --filter \"{shared}[$(git rev-parse HEAD)]\" --filter \"{apps}[$(git rev-parse HEAD)]^...\" -- pnpx ttsc -b --verbose tsconfig.build.json",
-    "test:unit": "ts-node -T .scripts/ci/run-unit-tests",
+    "test:unit": "pnpm run --parallel --filter {apps} --filter {shared} test:unit",
     "test:e2e": "pnpm build-necessary-libs && pnpm run test:e2e --parallel --parseable --filter \"...@my/*[$(git rev-parse HEAD)]\" --test-pattern=\"**/*.spec.ts\""
   },
   "devDependencies": {
     "@pnpm/filter-workspace-packages": "^2.3.10",
     "@pnpm/find-workspace-packages": "^2.3.38",
+    "@pnpm/lockfile-file": "^3.2.0",
     "@pnpm/logger": "^3.2.3",
+    "@pnpm/prune-lockfile": "^2.0.19",
     "@types/js-yaml": "^4.0.0",
     "@types/node": "^14.14.28",
     "@typescript-eslint/eslint-plugin": "^4.6.1",
@@ -20,9 +22,11 @@
     "eslint-config-prettier": "7.1.0",
     "eslint-plugin-prettier": "^3.1.4",
     "execa": "^5.0.0",
+    "find-up": "^5.0.0",
     "husky": "^4.3.8",
     "js-yaml": "^4.0.0",
     "prettier": "^2.2.1",
+    "tempy": "^1.0.0",
     "ts-node": "^9.1.1",
     "typescript": "4.2.0-dev.20210208"
   }

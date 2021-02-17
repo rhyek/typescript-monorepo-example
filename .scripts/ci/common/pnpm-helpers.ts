@@ -1,4 +1,6 @@
+import path from 'path';
 import execa from 'execa';
+import findUp from 'find-up';
 import { PackageGraph } from '@pnpm/filter-workspace-packages';
 import { Project } from '@pnpm/find-workspace-packages';
 
@@ -41,4 +43,12 @@ export async function pnpmRun(
       { stdio: 'inherit' },
     );
   }
+}
+
+export async function findWorkspaceDir() {
+  const workspaceFile = await findUp('pnpm-workspace.yaml');
+  if (!workspaceFile) {
+    throw new Error('pnpm-workspace.yaml file not found.');
+  }
+  return path.dirname(workspaceFile);
 }

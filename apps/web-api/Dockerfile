@@ -1,15 +1,23 @@
-FROM node:14.15-buster-slim
+FROM node:14.15-alpine3.13
 
 RUN npm i -g pnpm
 
 WORKDIR /monorepo
-COPY package.json pnpm-*.yaml tsconfig.json ./
-COPY src/lib/package.json /monorepo/src/lib/
-COPY src/web-api/package.json /monorepo/src/web-api/
+
+COPY pnpm-*.yaml ./
+COPY shared/lib/package.json /monorepo/shared/lib/
+COPY apps/web-api/package.json /monorepo/apps/web-api/
 RUN pnpm i --frozen-lockfile --prod
-COPY src/lib /monorepo/src/lib
-COPY src/web-api /monorepo/src/web-api
-WORKDIR /monorepo/src/web-api
+
+COPY tsconfig.json ./
+
+COPY shared/lib/tsconfig.json shared/lib/tsconfig.build.json /monorepo/shared/lib/
+COPY shared/lib/src /monorepo/shared/lib/src
+
+COPY apps/web-api/tsconfig.json apps/web-api/tsconfig.build.json /monorepo/apps/web-api/
+COPY apps/web-api/src /monorepo/apps/web-api/src
+
+WORKDIR /monorepo/apps/web-api
 
 RUN pnpm build
 
