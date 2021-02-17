@@ -13,7 +13,7 @@ async function bootstrap() {
     }
   }
   await app.listen(port, () => {
-    Logger.log(`Listening on port ${port}.`);
+    Logger.log(`Listening on port ${port}!`);
   });
 }
 bootstrap();

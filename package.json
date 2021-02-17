@@ -3,9 +3,10 @@
   "private": true,
   "scripts": {
     "dev": "pnpm exec --parallel --filter \"{apps}^...\" -- pnpx ttsc -b tsconfig.build.json && pnpm run dev --parallel --filter {apps}",
-    "lint": "pnpm run lint --parallel --filter \"{apps}[$(git rev-parse HEAD)]...\"",
-    "test:unit": "pnpm exec --parallel --filter \"{apps}[$(git rev-parse HEAD)]^...\" -- pnpx ttsc -b tsconfig.build.json && pnpm run test:unit --parallel --filter \"{apps}[$(git rev-parse HEAD)]\"",
-    "test:e2e": "pnpm exec --parallel --filter \"{apps}[$(git rev-parse HEAD)]^...\" -- pnpx ttsc -b tsconfig.build.json && pnpm run test:e2e --parallel --filter \"{apps}[$(git rev-parse HEAD)]\"",
+    "lint": "pnpm run lint --parallel --filter \"@my/*[$(git rev-parse HEAD)]\"",
+    "build-necessary-libs": "pnpm exec --parallel --filter \"{shared}[$(git rev-parse HEAD)]\" --filter \"{apps}[$(git rev-parse HEAD)]^...\" -- pnpx ttsc -b tsconfig.build.json",
+    "test:unit": "pnpm build-necessary-libs && pnpm run test:unit --parallel --filter \"...@my/*[$(git rev-parse HEAD)]\" --test-pattern=\"**/*.spec.ts\"",
+    "test:e2e": "pnpm build-necessary-libs && pnpm run test:e2e --parallel --filter \"...@my/*[$(git rev-parse HEAD)]\" --test-pattern=\"**/*.spec.ts\"",
     "clean:builds": "tsc -b --clean",
     "clean:node_modules": "rm -rf ./node_modules src/lib/node_modules src/web-api/node_modules"
   },
