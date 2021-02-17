@@ -1,12 +1,11 @@
 {
   "name": "typescript-monorepo",
   "private": true,
-  "dev": "pnpm exec --parallel --filter \"{apps}^...\" -- pnpx ttsc -b tsconfig.build.json && pnpm run dev --parallel --filter {apps}",
   "scripts": {
-    "lint": "pnpm run lint --parallel  --parseable --filter \"@my/*[$(git rev-parse HEAD)]\"",
-    "build-necessary-libs": "pnpm exec --parallel --parseable --filter \"{shared}[$(git rev-parse HEAD)]\" --filter \"{apps}[$(git rev-parse HEAD)]^...\" -- pnpx ttsc -b --verbose tsconfig.build.json",
-    "test:unit": "pnpm run --parallel --filter {apps} --filter {shared} test:unit",
-    "test:e2e": "pnpm build-necessary-libs && pnpm run test:e2e --parallel --parseable --filter \"...@my/*[$(git rev-parse HEAD)]\" --test-pattern=\"**/*.spec.ts\""
+    "dev": "pnpm exec --parallel --filter \"{apps}^...\" -- pnpx ttsc -b tsconfig.build.json && pnpm run dev --parallel --filter {apps}",
+    "lint": "pnpm run lint --parallel --filter {apps} --filter {shared}",
+    "test:unit": "pnpm run test:unit --parallel --filter {apps} --filter {shared}",
+    "test:e2e": "pnpm run test:e2e --parallel --filter {apps}"
   },
   "devDependencies": {
     "@pnpm/filter-workspace-packages": "^2.3.10",
@@ -28,6 +27,7 @@
     "prettier": "^2.2.1",
     "tempy": "^1.0.0",
     "ts-node": "^9.1.1",
-    "typescript": "4.2.0-dev.20210208"
+    "typescript": "4.2.0-dev.20210208",
+    "yargs": "^16.2.0"
   }
 }

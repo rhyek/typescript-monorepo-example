@@ -4,7 +4,10 @@ RUN npm i -g pnpm
 
 WORKDIR /monorepo
 
-COPY pnpm-*.yaml ./
+COPY pnpm-workspace.yaml ./
+# Generate dedicated-pnpm-lock.yaml using in root dir:
+# pnpx ts-node -T .script/ci/make-dedicated-lockfile @my/web-api dedicated-pnpm-lock.yaml
+COPY dedicated-pnpm-lock.yaml ./pnpm-lock.yaml
 COPY shared/lib/package.json /monorepo/shared/lib/
 COPY apps/web-api/package.json /monorepo/apps/web-api/
 RUN pnpm i --frozen-lockfile --prod
