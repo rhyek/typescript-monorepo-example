@@ -1,8 +1,7 @@
-import { makeMessage } from 'src/functions';
+import { capitalize } from 'src/functions';
 
 describe('functions', () => {
-  it('returns process.env.MSG', () => {
-    process.env.MSG = 'Hello World!';
-    expect(makeMessage()).toBe('HELLO WORLD! :-)');
+  it('can capitalize', () => {
+    expect(capitalize('hello')).toBe('HELLO');
   });
 });

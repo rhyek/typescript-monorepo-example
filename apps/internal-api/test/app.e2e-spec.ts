@@ -16,7 +16,9 @@ describe('AppController (e2e)', () => {
   });
 
   it('/ (GET)', () => {
-    return request(app.getHttpServer()).get('/').expect(500);
-    // .expect('Hello World!');
+    // prettier-ignore
+    return request(app.getHttpServer())
+      .get('/')
+      .expect('HELLO');
   });
 });

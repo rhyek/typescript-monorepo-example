@@ -2,11 +2,10 @@
   "name": "typescript-monorepo",
   "private": true,
   "scripts": {
-    "dev": "pnpm run --parallel --filter ./src/ dev",
-    "lint": "pnpm run --parallel --filter ./src/ lint",
-    "test:unit": "pnpm run --parallel --filter ./src/ test:unit",
-    "test:e2e": "pnpm run --parallel --filter ./src/ test:e2e",
-    "build": "pnpm run --parallel --filter ./src/ build",
+    "dev": "pnpm exec --parallel --filter \"{apps}^...\" -- pnpx ttsc -b tsconfig.build.json && pnpm run dev --parallel --filter {apps}",
+    "lint": "pnpm run lint --parallel --filter \"{apps}[$(git rev-parse HEAD)]...\"",
+    "test:unit": "pnpm exec --parallel --filter \"{apps}[$(git rev-parse HEAD)]^...\" -- pnpx ttsc -b tsconfig.build.json && pnpm run test:unit --parallel --filter \"{apps}[$(git rev-parse HEAD)]\"",
+    "test:e2e": "pnpm exec --parallel --filter \"{apps}[$(git rev-parse HEAD)]^...\" -- pnpx ttsc -b tsconfig.build.json && pnpm run test:e2e --parallel --filter \"{apps}[$(git rev-parse HEAD)]\"",
     "clean:builds": "tsc -b --clean",
     "clean:node_modules": "rm -rf ./node_modules src/lib/node_modules src/web-api/node_modules"
   },

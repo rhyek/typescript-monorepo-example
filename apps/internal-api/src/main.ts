@@ -7,7 +7,7 @@ async function bootstrap() {
   let port = process.env.PORT;
   if (typeof port === 'undefined') {
     if (process.env.NODE_ENV === 'development') {
-      port = '3000';
+      port = '3001';
     } else {
       throw new Error('Port not defined.');
     }
