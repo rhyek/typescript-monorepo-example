@@ -1,16 +1,17 @@
 {
   "name": "typescript-monorepo",
   "private": true,
+  "dev": "pnpm exec --parallel --filter \"{apps}^...\" -- pnpx ttsc -b tsconfig.build.json && pnpm run dev --parallel --filter {apps}",
   "scripts": {
-    "dev": "pnpm exec --parallel --filter \"{apps}^...\" -- pnpx ttsc -b tsconfig.build.json && pnpm run dev --parallel --filter {apps}",
-    "lint": "pnpm run lint --parallel --filter \"@my/*[$(git rev-parse HEAD)]\"",
-    "build-necessary-libs": "pnpm exec --parallel --filter \"{shared}[$(git rev-parse HEAD)]\" --filter \"{apps}[$(git rev-parse HEAD)]^...\" -- pnpx ttsc -b tsconfig.build.json",
-    "test:unit": "pnpm build-necessary-libs && pnpm run test:unit --parallel --filter \"...@my/*[$(git rev-parse HEAD)]\" --test-pattern=\"**/*.spec.ts\"",
-    "test:e2e": "pnpm build-necessary-libs && pnpm run test:e2e --parallel --filter \"...@my/*[$(git rev-parse HEAD)]\" --test-pattern=\"**/*.spec.ts\"",
-    "clean:builds": "tsc -b --clean",
-    "clean:node_modules": "rm -rf ./node_modules src/lib/node_modules src/web-api/node_modules"
+    "lint": "pnpm run lint --parallel  --parseable --filter \"@my/*[$(git rev-parse HEAD)]\"",
+    "build-necessary-libs": "pnpm exec --parallel --parseable --filter \"{shared}[$(git rev-parse HEAD)]\" --filter \"{apps}[$(git rev-parse HEAD)]^...\" -- pnpx ttsc -b --verbose tsconfig.build.json",
+    "test:unit": "ts-node -T .scripts/ci/run-unit-tests",
+    "test:e2e": "pnpm build-necessary-libs && pnpm run test:e2e --parallel --parseable --filter \"...@my/*[$(git rev-parse HEAD)]\" --test-pattern=\"**/*.spec.ts\""
   },
   "devDependencies": {
+    "@pnpm/filter-workspace-packages": "^2.3.10",
+    "@pnpm/find-workspace-packages": "^2.3.38",
+    "@pnpm/logger": "^3.2.3",
     "@types/js-yaml": "^4.0.0",
     "@types/node": "^14.14.28",
     "@typescript-eslint/eslint-plugin": "^4.6.1",
@@ -18,6 +19,7 @@
     "eslint": "^7.12.1",
     "eslint-config-prettier": "7.1.0",
     "eslint-plugin-prettier": "^3.1.4",
+    "execa": "^5.0.0",
     "husky": "^4.3.8",
     "js-yaml": "^4.0.0",
     "prettier": "^2.2.1",
