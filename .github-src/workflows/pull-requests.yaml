@@ -39,7 +39,7 @@ jobs:
     name: Pre-test
     runs-on: ubuntu-20.04
     steps:
-      - uses: pnpm/action-setup@v1
+      - uses: pnpm/action-setup@v1.2.1
         with:
           version: 5.17.2
       - uses: actions/checkout@v2
