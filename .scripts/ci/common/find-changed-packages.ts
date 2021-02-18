@@ -113,7 +113,7 @@ async function filterProjects(
 
 async function getTargetComparisonGitRef() {
   const commit = isCI()
-    ? process.env.GITHUB_BASE_REF
+    ? `origin/${process.env.GITHUB_BASE_REF}`
     : (await execa('git', ['rev-parse', 'HEAD'])).stdout; // get last commit on current branch
 
   if (!commit) {
