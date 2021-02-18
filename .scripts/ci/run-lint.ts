@@ -1,7 +1,7 @@
 import { findChangedPackages } from './common/find-changed-packages';
 import { pnpmRun } from './common/pnpm-helpers';
 
-async function main() {
+export async function main() {
   const all = await findChangedPackages([
     { parentDir: 'shared' },
     { parentDir: 'apps' },
@@ -9,8 +9,10 @@ async function main() {
   await pnpmRun('lint', all);
 }
 
-main();
+if (require.main === module) {
+  main();
 
-process.on('unhandledRejection', (error) => {
-  throw error;
-});
+  process.on('unhandledRejection', (error) => {
+    throw error;
+  });
+}

@@ -9,8 +9,7 @@ import { pnpmExec, pnpmRun } from './common/pnpm-helpers';
  * more than once (two apps depend on the same lib) there is a risk of
  * collision while writing output files.
  */
-async function main() {
-  const testType = process.argv[2];
+export async function main(testType: 'unit' | 'e2e') {
   if (!['unit', 'e2e'].includes(testType)) {
     throw new Error(`Invalid test type: ${testType}.`);
   }
@@ -31,8 +30,10 @@ async function main() {
   await pnpmRun(`test:${testType}`, all);
 }
 
-main();
+if (require.main === module) {
+  main(process.argv[2] as 'unit' | 'e2e');
 
-process.on('unhandledRejection', (error) => {
-  throw error;
-});
+  process.on('unhandledRejection', (error) => {
+    throw error;
+  });
+}

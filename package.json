@@ -7,6 +7,9 @@
     "test:unit": "pnpm run test:unit --parallel --filter {apps} --filter {shared}",
     "test:e2e": "pnpm run test:e2e --parallel --filter {apps}"
   },
+  "husky": {
+    "pre-commit": "ts-node -T .scripts/pre-commit && ./.github-src/build.sh"
+  },
   "devDependencies": {
     "@pnpm/filter-workspace-packages": "^2.3.10",
     "@pnpm/find-workspace-packages": "^2.3.38",
@@ -17,6 +20,7 @@
     "@types/node": "^14.14.28",
     "@typescript-eslint/eslint-plugin": "^4.6.1",
     "@typescript-eslint/parser": "^4.6.1",
+    "colors": "^1.4.0",
     "eslint": "^7.12.1",
     "eslint-config-prettier": "7.1.0",
     "eslint-plugin-prettier": "^3.1.4",
@@ -24,6 +28,7 @@
     "find-up": "^5.0.0",
     "husky": "^4.3.8",
     "js-yaml": "^4.0.0",
+    "mem": "^8.0.0",
     "prettier": "^2.2.1",
     "tempy": "^1.0.0",
     "ts-node": "^9.1.1",

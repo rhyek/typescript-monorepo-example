@@ -1,5 +1,0 @@
-{
-  "hooks": {
-    "pre-commit": "ts-node -T .scripts/ci/run-lint && ts-node -T .scripts/ci/run-tests unit && ts-node -T .scripts/ci/run-tests e2e && ./.github-src/build.sh"
-  }
-}

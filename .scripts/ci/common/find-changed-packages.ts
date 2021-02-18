@@ -1,9 +1,12 @@
-import fs from 'fs';
+import fs from 'fs/promises';
+import fsLegacy from 'fs';
 import path from 'path';
+import 'colors';
 import execa from 'execa';
+import mem from 'mem';
 import tempy from 'tempy';
 import {
-  readProjects,
+  readProjects as slowReadProjects,
   filterPkgsBySelectorObjects,
   PackageGraph,
   PackageSelector,
@@ -37,23 +40,26 @@ function changedBasedOnDiffFiles(
   return false;
 }
 
-async function changedBasedOnLockfileDiff(
-  workspaceDir: string,
-  refLockfileDir: string,
-  packageName: string,
-) {
-  const current = await makeDedicatedLockfileForPackage(
-    workspaceDir,
-    packageName,
-    false,
-  );
-  const old = await makeDedicatedLockfileForPackage(
-    refLockfileDir,
-    packageName,
-    false,
-  );
-  return current.content !== old.content;
-}
+const changedBasedOnLockfileDiff = mem(
+  async (workspaceDir: string, refLockfileDir: string, packageName: string) => {
+    const current = await makeDedicatedLockfileForPackage(
+      workspaceDir,
+      packageName,
+      false,
+    );
+    const old = await makeDedicatedLockfileForPackage(
+      refLockfileDir,
+      packageName,
+      false,
+    );
+    return current.content !== old.content;
+  },
+  { cacheKey: (args) => args.join(',') },
+);
+
+const readProjects = mem((workspaceDir: string) => {
+  return slowReadProjects(workspaceDir, []);
+});
 
 async function filterProjects(
   workspaceDir: string,
@@ -62,56 +68,58 @@ async function filterProjects(
   selectors: Selector[],
 ) {
   const matchedPackages: PackageGraph<Project> = {};
-  const { allProjects } = await readProjects(workspaceDir, []);
-  for (const selector of selectors) {
-    const {
-      parentDir,
-      diffExclusions = [],
-      excludeSelf,
-      includeDependencies,
-      includeDependents,
-    } = selector;
-    let packages = await filterPkgsBySelectorObjects(
-      allProjects,
-      [{ parentDir }],
-      { workspaceDir },
-    );
-    for (const [packageBaseDir, config] of Object.entries(
-      packages.selectedProjectsGraph,
-    )) {
-      const packageName = config.package.manifest.name;
-      if (!packageName) {
-        throw new Error(`Package at ${packageBaseDir} is missing a name.`);
+  const { allProjects } = await readProjects(workspaceDir);
+  await Promise.all(
+    selectors.map(async (selector) => {
+      const {
+        parentDir,
+        diffExclusions = [],
+        excludeSelf,
+        includeDependencies,
+        includeDependents,
+      } = selector;
+      let packages = await filterPkgsBySelectorObjects(
+        allProjects,
+        [{ parentDir }],
+        { workspaceDir },
+      );
+      for (const [packageBaseDir, config] of Object.entries(
+        packages.selectedProjectsGraph,
+      )) {
+        const packageName = config.package.manifest.name;
+        if (!packageName) {
+          throw new Error(`Package at ${packageBaseDir} is missing a name.`);
+        }
+        const changed =
+          changedBasedOnDiffFiles(packageBaseDir, diffFiles, diffExclusions) ||
+          (await changedBasedOnLockfileDiff(
+            workspaceDir,
+            refLockfileDir,
+            packageName,
+          ));
+        if (changed) {
+          const { selectedProjectsGraph } = await filterPkgsBySelectorObjects(
+            allProjects,
+            [
+              {
+                parentDir,
+                namePattern: config.package.manifest.name,
+                excludeSelf,
+                includeDependencies,
+                includeDependents,
+              },
+            ],
+            { workspaceDir },
+          );
+          Object.assign(matchedPackages, selectedProjectsGraph);
+        }
       }
-      const changed =
-        changedBasedOnDiffFiles(packageBaseDir, diffFiles, diffExclusions) ||
-        (await changedBasedOnLockfileDiff(
-          workspaceDir,
-          refLockfileDir,
-          packageName,
-        ));
-      if (changed) {
-        const { selectedProjectsGraph } = await filterPkgsBySelectorObjects(
-          allProjects,
-          [
-            {
-              parentDir,
-              namePattern: config.package.manifest.name,
-              excludeSelf,
-              includeDependencies,
-              includeDependents,
-            },
-          ],
-          { workspaceDir },
-        );
-        Object.assign(matchedPackages, selectedProjectsGraph);
-      }
-    }
-  }
+    }),
+  );
   return matchedPackages;
 }
 
-async function getTargetComparisonGitRef() {
+const getTargetComparisonGitRef = mem(async () => {
   const commit = isCI()
     ? `origin/${process.env.GITHUB_BASE_REF}`
     : (await execa('git', ['rev-parse', 'HEAD'])).stdout; // get last commit on current branch
@@ -120,26 +128,32 @@ async function getTargetComparisonGitRef() {
     throw new Error('No ref to compare to.');
   }
   return commit;
-}
+});
 
-async function getDiffFiles(comparisonRef: string, workspaceDir: string) {
-  const { stdout } = await execa('git', [
-    'diff',
-    '--name-only',
-    comparisonRef,
-    'HEAD',
-  ]);
-  const files = stdout.split('\n').map((f) => path.resolve(workspaceDir, f));
-  return files;
-}
+const getDiffFiles = mem(
+  async (comparisonRef: string, workspaceDir: string) => {
+    const { stdout } = await execa('git', [
+      'diff',
+      '--name-only',
+      comparisonRef,
+      'HEAD',
+    ]);
+    const files = stdout.split('\n').map((f) => path.resolve(workspaceDir, f));
+    return files;
+  },
+);
 
-async function generateLockfileFromRef(ref: string) {
+const generateLockfileFromRef = mem(async (ref: string) => {
   const tempDir = tempy.directory();
   const { stdout } = await execa('git', ['show', `${ref}:${lockfileName}`]);
   const oldLockfilePath = path.resolve(tempDir, lockfileName);
-  fs.writeFileSync(oldLockfilePath, stdout, { encoding: 'utf8' });
+  await fs.writeFile(oldLockfilePath, stdout, { encoding: 'utf8' });
+  process.on('exit', () => {
+    fsLegacy.rmSync(oldLockfilePath);
+    console.log(`Deleted ${oldLockfilePath}.`.italic.yellow);
+  });
   return { content: stdout, dir: tempDir, path: oldLockfilePath };
-}
+});
 
 Object.defineProperty(RegExp.prototype, 'toJSON', {
   value: RegExp.prototype.toString,
@@ -170,7 +184,7 @@ function logResult(result: PackageGraph<Project>) {
       console.log(`  - ${node.package.manifest.name}`);
     }
   } else {
-    console.log('  No changes.');
+    console.log('  No changes.'.blue);
   }
 }
 
@@ -187,6 +201,5 @@ export async function findChangedPackages(selectors: Selector[]) {
     selectors,
   );
   logResult(result);
-  fs.rmSync(refLockfile.path);
   return result;
 }

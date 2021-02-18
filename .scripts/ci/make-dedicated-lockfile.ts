@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import yargs from 'yargs';
 import { findWorkspaceDir } from './common/pnpm-helpers';
@@ -51,7 +51,7 @@ yargs(process.argv.slice(2))
         packageName,
         true,
       );
-      fs.writeFileSync(outFile, content, { encoding: 'utf8' });
+      await fs.writeFile(outFile, content, { encoding: 'utf8' });
       console.log(`Created ${outFile}.`);
     },
   )

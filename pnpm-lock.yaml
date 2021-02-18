@@ -10,6 +10,7 @@ importers:
       '@types/node': 14.14.28
       '@typescript-eslint/eslint-plugin': 4.14.0_7bcd4dc09d6fb0b6dd23749b6cf31217
       '@typescript-eslint/parser': 4.14.0_522781a0d4040bb3c9c4dc6d217b949c
+      colors: 1.4.0
       eslint: 7.18.0
       eslint-config-prettier: 7.1.0_eslint@7.18.0
       eslint-plugin-prettier: 3.3.1_efe762de77ffca883b5e24b22265768d
@@ -17,6 +18,7 @@ importers:
       find-up: 5.0.0
       husky: 4.3.8
       js-yaml: 4.0.0
+      mem: 8.0.0
       prettier: 2.2.1
       tempy: 1.0.0
       ts-node: 9.1.1_typescript@4.2.0-dev.20210208
@@ -32,6 +34,7 @@ importers:
       '@types/node': ^14.14.28
       '@typescript-eslint/eslint-plugin': ^4.6.1
       '@typescript-eslint/parser': ^4.6.1
+      colors: ^1.4.0
       eslint: ^7.12.1
       eslint-config-prettier: 7.1.0
       eslint-plugin-prettier: ^3.1.4
@@ -39,6 +42,7 @@ importers:
       find-up: ^5.0.0
       husky: ^4.3.8
       js-yaml: ^4.0.0
+      mem: ^8.0.0
       prettier: ^2.2.1
       tempy: ^1.0.0
       ts-node: ^9.1.1
@@ -2618,7 +2622,6 @@ packages:
     dev: true
     engines:
       node: '>=0.1.90'
-    optional: true
     resolution:
       integrity: sha512-a+UqTh4kgZg/SlGvfbzDHpgRu7AAQOmmqRHJnxhRZICKFUT91brVhNNt58CMWU9PsBbv3PDCZUHbVxuDiH2mtA==
   /combined-stream/1.0.8:
