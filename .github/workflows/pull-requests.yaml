@@ -28,8 +28,9 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
       - run: pnpm i --frozen-lockfile
-      - run: >-
-          git fetch --no-tags --prune --depth=1 origin
-          +refs/heads/*:refs/remotes/origin/*
+      - name: Fetch target branch
+        run: >-
+          git fetch --no-tags --prune --depth=1 origin +refs/heads/${{
+          github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
       - run: pnpx ts-node -T .scripts/ci/run-lint
       - run: pnpx ts-node -T .scripts/ci/run-tests unit
