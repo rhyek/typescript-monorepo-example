@@ -9,40 +9,25 @@ env:
   DOCKER_BUILDKIT: 1
 
 anchors:
-  # pnpm-setup: &pnpm-setup
-  #   - uses: actions/setup-node@v2
-  #     with:
-  #       node-version: '14.15.4'
-  #   - name: Set global npm folder
-  #     run: |
-  #       mkdir ~/.npm-global
-  #       npm config set prefix '~/.npm-global'
-  #       echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
-  #   - name: Cache npm global folder
-  #     id: cache-npm-global
-  #     uses: actions/cache@v2
-  #     with:
-  #       path: ~/.npm-global
-  #       key: ${{ runner.os }}-tests-npm-global
-  #   - name: Install global node packages
-  #     if: steps.cache-npm-global.outputs.cache-hit != 'true'
-  #     run: |
-  #       npm i -g pnpm
+  setup-pnpm: &setup-pnpm
+    name: Setup pnpm
+    uses: pnpm/action-setup@v1.2.1
+    with:
+      version: 5.17.2
   node-modules-cache: &node-modules-cache
+    name: Cache node_modules
     uses: actions/cache@v2
     with:
       path: '**/node_modules'
       key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
 
 jobs:
-  pre-test:
-    name: Pre-test
+  lint-unit:
+    name: Lint and Unit Tests
     runs-on: ubuntu-20.04
     steps:
-      - uses: pnpm/action-setup@v1.2.1
-        with:
-          version: 5.17.2
       - uses: actions/checkout@v2
+      - <<: *setup-pnpm
       - name: Cache pnpm store
         uses: actions/cache@v2
         with:

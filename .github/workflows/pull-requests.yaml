@@ -6,14 +6,15 @@ name: Tests
 env:
   DOCKER_BUILDKIT: 1
 jobs:
-  pre-test:
-    name: Pre-test
+  lint-unit:
+    name: Lint and Unit Tests
     runs-on: ubuntu-20.04
     steps:
-      - uses: pnpm/action-setup@v1.2.1
+      - uses: actions/checkout@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v1.2.1
         with:
           version: 5.17.2
-      - uses: actions/checkout@v2
       - name: Cache pnpm store
         uses: actions/cache@v2
         with:
@@ -23,7 +24,8 @@ jobs:
             }}
           restore-keys: |
             ${{ runner.os }}-tests-pnpm-store-
-      - uses: actions/cache@v2
+      - name: Cache node_modules
+        uses: actions/cache@v2
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
