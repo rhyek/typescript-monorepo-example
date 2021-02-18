@@ -123,7 +123,12 @@ async function getTargetComparisonGitRef() {
 }
 
 async function getDiffFiles(comparisonRef: string, workspaceDir: string) {
-  const { stdout } = await execa('git', ['diff', '--name-only', comparisonRef]);
+  const { stdout } = await execa('git', [
+    'diff',
+    '--name-only',
+    comparisonRef,
+    'HEAD',
+  ]);
   const files = stdout.split('\n').map((f) => path.resolve(workspaceDir, f));
   return files;
 }
