@@ -10,6 +10,10 @@ import { pnpmExec, pnpmRun } from './common/pnpm-helpers';
  * collision while writing output files.
  */
 async function main() {
+  const testType = process.argv[2];
+  if (!['unit', 'e2e'].includes(testType)) {
+    throw new Error(`Invalid test type: ${testType}.`);
+  }
   const libs = await findChangedPackages([
     { parentDir: 'shared' },
     { parentDir: 'apps', includeDependencies: true, excludeSelf: true },
@@ -24,7 +28,7 @@ async function main() {
       diffExclusions: [/.\.spec\.ts/],
     },
   ]);
-  await pnpmRun('test:unit', all);
+  await pnpmRun(`test:${testType}`, all);
 }
 
 main();

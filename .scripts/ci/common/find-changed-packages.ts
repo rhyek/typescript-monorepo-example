@@ -136,9 +136,43 @@ async function generateLockfileFromRef(ref: string) {
   return { content: stdout, dir: tempDir, path: oldLockfilePath };
 }
 
+Object.defineProperty(RegExp.prototype, 'toJSON', {
+  value: RegExp.prototype.toString,
+});
+
+function logParams(selectors: Selector[], ref: string) {
+  console.log('Finding changed packages with:');
+  console.log('  Selectors:');
+  for (const selector of selectors) {
+    let i = 0;
+    for (const [key, value] of Object.entries(selector)) {
+      if (i === 0) {
+        console.log(`    -  ${key}: ${value}`);
+      } else {
+        console.log(`       ${key}: ${value}`);
+      }
+      i++;
+    }
+  }
+  console.log(`  Against ref: ${ref}`);
+}
+
+function logResult(result: PackageGraph<Project>) {
+  console.log('Changed:');
+  const nodes = Object.values(result);
+  if (nodes.length > 0) {
+    for (const node of nodes) {
+      console.log(`  - ${node.package.manifest.name}`);
+    }
+  } else {
+    console.log('  No changes.');
+  }
+}
+
 export async function findChangedPackages(selectors: Selector[]) {
-  const workspaceDir = await findWorkspaceDir();
   const comparisonRef = await getTargetComparisonGitRef();
+  logParams(selectors, comparisonRef);
+  const workspaceDir = await findWorkspaceDir();
   const diffFiles = await getDiffFiles(comparisonRef, workspaceDir);
   const refLockfile = await generateLockfileFromRef(comparisonRef);
   const result = await filterProjects(
@@ -147,6 +181,7 @@ export async function findChangedPackages(selectors: Selector[]) {
     refLockfile.dir,
     selectors,
   );
+  logResult(result);
   fs.rmSync(refLockfile.path);
   return result;
 }
