@@ -8,7 +8,9 @@
     "test:e2e": "pnpm run test:e2e --parallel --filter {apps}"
   },
   "husky": {
-    "pre-commit": "ts-node -T .scripts/pre-commit && ./.github-src/build.sh"
+    "hooks": {
+      "pre-commit": "ts-node -T .scripts/pre-commit && ./.github-src/build.sh"
+    }
   },
   "devDependencies": {
     "@pnpm/filter-workspace-packages": "^2.3.10",
