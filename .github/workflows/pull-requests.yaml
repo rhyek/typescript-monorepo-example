@@ -137,5 +137,4 @@ jobs:
           path: .outputs
           key: ${{ runner.os }}-job-outputs-${{ github.sha }}
       - run: |
-          cat .outputs/build/needs-build-web-api
-          cat .outputs/build/needs-build-internal-api
+          ls -la .outputs/build
