@@ -3,9 +3,10 @@ import { findChangedPackages } from './common/find-changed-packages';
 import { pnpmRun } from './common/pnpm-helpers';
 
 export async function main() {
+  console.log('Running lint.'.cyan.bold);
   const all = await findChangedPackages([
-    { parentDir: 'shared' },
-    { parentDir: 'apps' },
+    { parentDir: 'shared', diffInclude: [/\.eslintrc/, /.*\.ts$/] },
+    { parentDir: 'apps', diffInclude: [/\.eslintrc/, /.*\.ts$/] },
   ]);
   await pnpmRun('lint', all);
 }

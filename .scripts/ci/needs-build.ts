@@ -20,19 +20,18 @@ yargs(process.argv.slice(2))
       const changed = await findChangedPackages([
         {
           parentDir: 'shared',
-          includeDependents: true,
           excludeSelf: true,
-          diffExclusions: [/.\.spec\.ts/],
+          includeDependents: true,
+          diffInclude: [/tsconfig\.(build\.)?json/, /\/package\.json/, /\.ts$/],
+          diffExclude: /\.(e2e-)?spec\.ts$/,
         },
         {
           namePattern: packageName,
-          diffExclusions: [/.\.spec\.ts/, /\btest\/.+/],
+          diffInclude: [/tsconfig\.(build\.)?json/, /\/package\.json/, /\.ts$/],
+          diffExclude: /\.(e2e-)?spec\.ts$/,
         },
       ]);
-      const found = Object.values(changed).find(
-        (v) => v.package.manifest.name === packageName,
-      );
-      if (found) {
+      if (changed.includes(packageName)) {
         console.log('true');
       } else {
         console.log('false');

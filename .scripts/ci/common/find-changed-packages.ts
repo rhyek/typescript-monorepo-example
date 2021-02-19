@@ -18,7 +18,8 @@ import { makeDedicatedLockfileForPackage } from './dedicated-lockfile';
 import { debug } from './log';
 
 export type Selector = PackageSelector & {
-  diffExclusions?: RegExp[];
+  diffInclude?: RegExp | RegExp[];
+  diffExclude?: RegExp | RegExp[];
 };
 
 export function isCI() {
@@ -28,12 +29,15 @@ export function isCI() {
 function changedBasedOnDiffFiles(
   packageBaseDir: string,
   diffFiles: string[],
-  diffExclusions: RegExp[],
+  diffInclude: RegExp[],
+  diffExclude: RegExp[],
 ) {
   for (const diffFile of diffFiles) {
     if (
-      diffFile.startsWith(packageBaseDir) &&
-      diffExclusions.every((reg) => !reg.exec(diffFile))
+      (/^[^/]+$/.exec(diffFile) || diffFile.startsWith(packageBaseDir)) &&
+      (diffInclude.length === 0 ||
+        diffInclude.some((regex) => regex.exec(diffFile))) &&
+      diffExclude.every((regex) => !regex.exec(diffFile))
     ) {
       return true;
     }
@@ -75,25 +79,37 @@ async function filterProjects(
       const {
         namePattern,
         parentDir,
-        diffExclusions = [],
         excludeSelf,
         includeDependencies,
         includeDependents,
       } = selector;
+      let { diffInclude = [], diffExclude = [] } = selector;
+      if (!Array.isArray(diffInclude)) {
+        diffInclude = [diffInclude];
+      }
+      if (!Array.isArray(diffExclude)) {
+        diffExclude = [diffExclude];
+      }
       let packages = await filterPkgsBySelectorObjects(
         allProjects,
         [{ namePattern, parentDir }],
         { workspaceDir },
       );
-      for (const [packageBaseDir, config] of Object.entries(
+      for (let [packageBaseDir, config] of Object.entries(
         packages.selectedProjectsGraph,
       )) {
+        packageBaseDir = packageBaseDir.substr(workspaceDir.length + 1);
         const packageName = config.package.manifest.name;
         if (!packageName) {
           throw new Error(`Package at ${packageBaseDir} is missing a name.`);
         }
         const changed =
-          changedBasedOnDiffFiles(packageBaseDir, diffFiles, diffExclusions) ||
+          changedBasedOnDiffFiles(
+            packageBaseDir,
+            diffFiles,
+            diffInclude,
+            diffExclude,
+          ) ||
           (await changedBasedOnLockfileDiff(
             workspaceDir,
             refLockfileDir,
@@ -139,7 +155,7 @@ const getDiffFiles = mem(
       '--name-only',
       comparisonRef,
     ]);
-    const files = stdout.split('\n').map((f) => path.resolve(workspaceDir, f));
+    const files = stdout.split('\n');
     return files;
   },
 );
@@ -176,12 +192,11 @@ function logParams(selectors: Selector[], ref: string) {
   debug(`  Against ref: ${ref}`);
 }
 
-function logResult(result: PackageGraph<Project>) {
+function logResult(packageNames: string[]) {
   debug('Changed:');
-  const nodes = Object.values(result);
-  if (nodes.length > 0) {
-    for (const node of nodes) {
-      debug(`  - ${node.package.manifest.name}`);
+  if (packageNames.length > 0) {
+    for (const packageName of packageNames) {
+      debug(`  - ${packageName}`);
     }
   } else {
     debug('  No changes.'.blue);
@@ -194,12 +209,15 @@ export async function findChangedPackages(selectors: Selector[]) {
   const workspaceDir = await findWorkspaceDir();
   const diffFiles = await getDiffFiles(comparisonRef, workspaceDir);
   const refLockfile = await generateLockfileFromRef(comparisonRef);
-  const result = await filterProjects(
+  const graph = await filterProjects(
     workspaceDir,
     diffFiles,
     refLockfile.dir,
     selectors,
   );
-  logResult(result);
-  return result;
+  const packageNames = Object.values(graph).map(
+    (node) => node.package.manifest.name!,
+  );
+  logResult(packageNames);
+  return packageNames;
 }

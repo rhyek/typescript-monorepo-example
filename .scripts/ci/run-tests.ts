@@ -14,19 +14,42 @@ export async function main(testType: 'unit' | 'e2e') {
   if (!['unit', 'e2e'].includes(testType)) {
     throw new Error(`Invalid test type: ${testType}.`);
   }
+  console.log(`Running ${testType} tests.`.cyan.bold);
+  const appsConfig = {
+    // any app package who's own files changed
+    parentDir: 'apps',
+    diffInclude: [/tsconfig/, /\/package\.json/, /\bjest\b/, /\.ts$/],
+    diffExclude: testType === 'unit' ? /\.e2e-spec\.ts$/ : /\.spec\.ts$/,
+  };
   const libs = await findChangedPackages([
-    { parentDir: 'shared' },
-    { parentDir: 'apps', includeDependencies: true, excludeSelf: true },
-  ]);
-  await pnpmExec(['pnpx', 'ttsc', '-b', 'tsconfig.build.json'], libs);
-  const all = await findChangedPackages([
-    { parentDir: 'shared' }, // any shared package who's own files changed
-    { parentDir: 'apps' }, // any app package who's own files changed
     {
-      parentDir: 'shared', // any shared package and its dependents who's own files changed except test files
-      includeDependents: true,
-      diffExclusions: [/.\.spec\.ts/],
+      parentDir: 'shared',
+      diffInclude: [/tsconfig/, /\/package\.json/, /\.ts$/],
+      diffExclude: /\.(e2e-)?spec\.ts$/,
     },
+    {
+      ...appsConfig,
+      excludeSelf: true,
+      includeDependencies: true,
+    },
+  ]);
+  await pnpmExec(['pnpx', 'ttsc', '-b', 'tsconfig.build.json'], libs, true);
+  const all = await findChangedPackages([
+    {
+      // any shared package who's own files changed
+      parentDir: 'shared',
+      diffInclude: [/tsconfig/, /\/package\.json/, /\bjest\b/, /\.ts$/],
+      diffExclude: testType === 'unit' ? /\.e2e-spec\.ts$/ : /\.spec\.ts$/,
+    },
+    {
+      // any shared package and its dependents who's own files changed except test files
+      parentDir: 'shared',
+      excludeSelf: true,
+      includeDependents: true,
+      diffInclude: [/tsconfig\.(build\.)?json/, /\/package\.json/, /\.ts$/],
+      diffExclude: /\.(e2e-)?spec\.ts$/,
+    },
+    appsConfig,
   ]);
   await pnpmRun(`test:${testType}`, all);
 }
