@@ -48,8 +48,6 @@ jobs:
     name: 'Apps: docker build'
     runs-on: ubuntu-20.04
     needs: [lint-unit-tests]
-    outputs:
-      needs-build: ${{ steps.needs-build.outputs.result }}
     strategy:
       matrix:
         include:
@@ -97,24 +95,39 @@ jobs:
       - name: Docker push
         if: steps.needs-build.outputs.result == 'true'
         run: docker push ${{ env.IMAGE }}:${{ github.sha }}
+      - uses: actions/cache@v2
+        with:
+          path: .outputs
+          key: ${{ runner.os }}-job-outputs-${{ github.sha }}
+      - run: |
+          rm -rf .outputs/build
+          mkdir -p .outputs/build
+          echo ${{ steps.needs-build.outputs.result }} > .outputs/build/needs-build-${{ matrix.name }}
   integration-tests:
     name: 'Apps: integration tests'
     runs-on: ubuntu-20.04
     needs: [build]
-    strategy:
-      matrix:
-        include:
-          - name: web-api
-            package-name: '@my/web-api'
-            path: apps/web-api
-          - name: internal-api
-            package-name: '@my/internal-api'
-            path: apps/internal-api
+    # strategy:
+    #   matrix:
+    #     include:
+    #       - name: web-api
+    #         package-name: '@my/web-api'
+    #         path: apps/web-api
+    #       - name: internal-api
+    #         package-name: '@my/internal-api'
+    #         path: apps/internal-api
     #   defaults:
     #     run:
     #       working-directory: ${{ matrix.path }}
     steps:
-      - run: echo ${{ needs.build.outputs.needs-build }}
+      - uses: actions/cache@v2
+        with:
+          path: .outputs
+          key: ${{ runner.os }}-job-outputs-${{ github.sha }}
+      - run: |
+          cat .outputs/build/needs-build-web-api
+          cat .outputs/build/needs-build-internal-api
+      # - run: echo ${{ needs.build.outputs.needs-build }}
   #     - *pnpm-setup
   #     - <<: *node-modules-cache
   #     - run: pnpm test:e2e
