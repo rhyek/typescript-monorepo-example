@@ -159,9 +159,9 @@ jobs:
       - name: Should run tests?
         id: should-run
         env:
-          DEPS: ${{ matrix.deps }}
           SUT_PACKAGE_NAME: ${{ matrix.package-name }}
           SUT_PATH: ${{ matrix.path }}
+          DEPS: ${{ matrix.deps }}
         run: |
           SHOULD_RUN=$(.scripts/ci/should-run-integration-tests.sh)
           echo "::set-output name=result::$SHOULD_RUN"
