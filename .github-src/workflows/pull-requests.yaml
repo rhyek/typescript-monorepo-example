@@ -111,6 +111,8 @@ jobs:
       - <<: *fetch-target-branch
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
+      - name: Docker login
+        run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
       - name: Should run tests?
         id: should-run
         run: |
