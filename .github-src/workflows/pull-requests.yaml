@@ -21,6 +21,7 @@ anchors:
       uses: pnpm/action-setup@v1.2.1
       with:
         version: 5.17.2
+    - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
   node-modules-cache: &node-modules-cache
     name: Cache node_modules
     uses: actions/cache@v2

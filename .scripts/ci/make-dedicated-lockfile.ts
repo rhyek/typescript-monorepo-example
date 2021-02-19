@@ -1,4 +1,4 @@
-#!/usr/bin/env -S pnpx ts-node-transpile-only
+#!/usr/bin/env ts-node-transpile-only
 import fs from 'fs/promises';
 import path from 'path';
 import yargs from 'yargs';

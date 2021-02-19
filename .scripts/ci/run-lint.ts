@@ -1,4 +1,4 @@
-#!/usr/bin/env -S pnpx ts-node-transpile-only
+#!/usr/bin/env ts-node-transpile-only
 import { findChangedPackages } from './common/find-changed-packages';
 import { pnpmRun } from './common/pnpm-helpers';
 
