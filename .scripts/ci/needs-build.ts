@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node-transpile-only
+#!/usr/bin/env -S pnpx ts-node-transpile-only
 import yargs from 'yargs';
 import { findChangedPackages } from './common/find-changed-packages';
 
