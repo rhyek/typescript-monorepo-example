@@ -99,12 +99,12 @@ jobs:
           echo "::set-output name=answer::$NEEDS_BUILD"
       - run: echo ${{ steps.needs-build.outputs.answer }}
       - name: Make dedicated pnpm lockfile
-        if: steps.needs-build.outputs.answer = 'true'
+        if: steps.needs-build.outputs.answer == 'true'
         run: >-
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }}
           --replace
       - name: Build docker image
-        if: steps.needs-build.outputs.answer = 'true'
+        if: steps.needs-build.outputs.answer == 'true'
         run: |
           docker build \
             -t ${{ env.IMAGE }}:${{ github.sha }} \
@@ -113,5 +113,5 @@ jobs:
             -f ${{ matrix.path }}/Dockerfile \
             .
       - name: Docker push
-        if: steps.needs-build.outputs.answer = 'true'
+        if: steps.needs-build.outputs.answer == 'true'
         run: docker push ${{ env.IMAGE }}:${{ github.sha }}
