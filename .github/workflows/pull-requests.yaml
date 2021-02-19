@@ -92,7 +92,7 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Set image name
         run: >-
-          echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ matrix.app-name }-${{
+          echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ matrix.app-name }}-${{
           env.GITHUB_BASE_REF_SLUG }}" >> $GITHUB_ENV
       - name: Should build docker image?
         id: needs-build
