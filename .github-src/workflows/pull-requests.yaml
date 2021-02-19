@@ -78,7 +78,7 @@ jobs:
               NEEDS_BUILD="true"
             fi
           fi
-          echo '::set-output name=answer::$NEEDS_BUILD'
+          echo "::set-output name=answer::$NEEDS_BUILD"
       - run: echo ${{ steps.needs-build.outputs.answer }}
       # - name: Make dedicated pnpm lockfile
       #   run: .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
