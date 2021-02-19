@@ -170,7 +170,7 @@ jobs:
             IFS=',' read -ra ARR <<< "$DEPS"
             for DEP in "${ARR[@]}"; do
               IMAGE="ghcr.io/$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG }}-$DEP"
-              docker manifest inspect $IMAGE:{{ github.sha }} > /dev/null
+              docker manifest inspect $IMAGE:${{ github.sha }} > /dev/null
               if [ $? == "0" ]; then
                 DEP_CHANGED=true
                 ANY_DEP_CHANGED=true
