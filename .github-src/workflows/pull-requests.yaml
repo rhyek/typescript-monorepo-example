@@ -8,10 +8,6 @@ on:
 env:
   DOCKER_BUILDKIT: 1
 
-defaults:
-  run:
-    shell: bash
-
 anchors:
   setup-pnpm: &setup-pnpm
     - name: Cache pnpm store
@@ -122,7 +118,7 @@ jobs:
           echo "SUT needs build: $SUT_CHANGED"
           DEPS=${{ matrix.deps }}
           ANY_DEP_CHANGED=false
-          if [ -z "$DEPS" ]; then
+          if [ ! -z "$DEPS" ]; then # if not empty
             COMPOSE_FILE=${{ matrix.path }}/test/docker-compose.ci.yaml
             touch $COMPOSE_FILE
             echo 'services:' >> $COMPOSE_FILE
