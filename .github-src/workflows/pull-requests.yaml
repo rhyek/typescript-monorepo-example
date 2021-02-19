@@ -43,8 +43,8 @@ jobs:
       - <<: *node-modules-cache
       - <<: *fetch-target-branch
       - run: pnpm i --frozen-lockfile
-      - run: .scripts/ci/run-lint.ts
-      - run: .scripts/ci/run-tests.ts unit
+      - run: pnpx ts-node -T .scripts/ci/run-lint.ts
+      - run: pnpx ts-node -T .scripts/ci/run-tests.ts unit
   apps-docker-build:
     name: 'Apps: docker build'
     runs-on: ubuntu-20.04
@@ -64,9 +64,9 @@ jobs:
       - <<: *node-modules-cache
       - <<: *fetch-target-branch
       - name: Should build
-        run: .scripts/ci/should-build.ts ${{ matrix.package-name }}
+        run: pnpx ts-node -T .scripts/ci/should-build.ts ${{ matrix.package-name }}
       - name: Make dedicated pnpm lockfile
-        run: .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
+        run: pnpx ts-node -T .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
       - name: Docker login
         run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
       - name: Inject slug/short variables
