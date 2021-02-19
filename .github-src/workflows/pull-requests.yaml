@@ -23,6 +23,7 @@ anchors:
         version: 5.17.2
         # run_install: |
         #   - args: [--global, typescript, ts-node]
+    - run: pnpm i -g typescript ts-node
   node-modules-cache: &node-modules-cache
     name: Cache node_modules
     uses: actions/cache@v2
