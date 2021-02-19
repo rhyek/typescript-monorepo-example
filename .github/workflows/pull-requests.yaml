@@ -120,8 +120,6 @@ jobs:
           path: .outputs
           key: ${{ runner.os }}-job-outputs-${{ github.sha }}
       - run: >
-          rm -rf .outputs/build
-
           mkdir -p .outputs/build
 
           echo ${{ steps.needs-build.outputs.result }} >
