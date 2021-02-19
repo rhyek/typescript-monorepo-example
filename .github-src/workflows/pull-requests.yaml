@@ -44,7 +44,7 @@ jobs:
       - <<: *fetch-target-branch
       - run: pnpm i --frozen-lockfile
       - run: pnpx ts-node -T .scripts/ci/run-lint.ts
-      - run: pnpx ts-node -T .scripts/ci/run-tests.ts unit
+      - run: .scripts/ci/run-tests.ts unit
   apps-docker-build:
     name: 'Apps: docker build'
     runs-on: ubuntu-20.04
