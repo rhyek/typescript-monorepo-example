@@ -33,7 +33,7 @@ anchors:
     run: git fetch --no-tags --prune --depth=1 origin +refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
 
 jobs:
-  lint-unit:
+  lint-unit-tests:
     name: Lint and Unit Tests
     runs-on: ubuntu-20.04
     steps:
@@ -44,10 +44,12 @@ jobs:
       - run: pnpm i --frozen-lockfile
       - run: .scripts/ci/run-lint.ts
       - run: .scripts/ci/run-tests.ts unit
-  apps-docker-build:
+  build:
     name: 'Apps: docker build'
     runs-on: ubuntu-20.04
-    needs: [lint-unit]
+    needs: [lint-unit-tests]
+    outputs:
+      needs-build: ${{ steps.needs-build.outputs.result }}
     strategy:
       matrix:
         include:
@@ -78,13 +80,13 @@ jobs:
               NEEDS_BUILD="true"
             fi
           fi
-          echo "::set-output name=answer::$NEEDS_BUILD"
-      - run: echo ${{ steps.needs-build.outputs.answer }}
+          echo "::set-output name=result::$NEEDS_BUILD"
+      - run: echo ${{ steps.needs-build.outputs.result }}
       - name: Make dedicated pnpm lockfile
-        if: steps.needs-build.outputs.answer == 'true'
+        if: steps.needs-build.outputs.result == 'true'
         run: .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
       - name: Build docker image
-        if: steps.needs-build.outputs.answer == 'true'
+        if: steps.needs-build.outputs.result == 'true'
         run: |
           docker build \
             -t ${{ env.IMAGE }}:${{ github.sha }} \
@@ -93,21 +95,26 @@ jobs:
             -f ${{ matrix.path }}/Dockerfile \
             .
       - name: Docker push
-        if: steps.needs-build.outputs.answer == 'true'
+        if: steps.needs-build.outputs.result == 'true'
         run: docker push ${{ env.IMAGE }}:${{ github.sha }}
-  # apps-integration-tests:
-  #   name: 'Apps: integration tests'
-  #   runs-on: ubuntu-20.04
-  #   needs: [apps-docker-build]
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - app-name: web-api
-  #           path: src/web-api
-  #   defaults:
-  #     run:
-  #       working-directory: ${{ matrix.path }}
-  #   steps:
+  integration-tests:
+    name: 'Apps: integration tests'
+    runs-on: ubuntu-20.04
+    needs: [build]
+    strategy:
+      matrix:
+        include:
+          - name: web-api
+            package-name: '@my/web-api'
+            path: apps/web-api
+          - name: internal-api
+            package-name: '@my/internal-api'
+            path: apps/internal-api
+    #   defaults:
+    #     run:
+    #       working-directory: ${{ matrix.path }}
+    steps:
+      - run: echo ${{ needs.build.outputs.needs-build }}
   #     - *pnpm-setup
   #     - <<: *node-modules-cache
   #     - run: pnpm test:e2e
