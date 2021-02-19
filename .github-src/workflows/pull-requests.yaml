@@ -23,7 +23,6 @@ anchors:
         version: 5.17.2
         # run_install: |
         #   - args: [--global, typescript, ts-node]
-    - run: pnpm i -g typescript ts-node
   node-modules-cache: &node-modules-cache
     name: Cache node_modules
     uses: actions/cache@v2
@@ -64,14 +63,10 @@ jobs:
       - *setup-pnpm
       - <<: *node-modules-cache
       - <<: *fetch-target-branch
-      - name: Should build
-        run: pnpx ts-node -T .scripts/ci/should-build.ts ${{ matrix.package-name }}
-      - name: Make dedicated pnpm lockfile
-        run: pnpx ts-node -T .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
-      - name: Docker login
-        run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
+      - name: Docker login
+        run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
       - name: Set image name
         run: echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ matrix.app-name }}-${{ env.GITHUB_BASE_REF_SLUG }}" >> $GITHUB_ENV
       - name: Should build docker image?
@@ -85,6 +80,8 @@ jobs:
             fi
           fi
           echo '::set-output name=ANSWER::$NEEDS_BUILD'
+      # - name: Make dedicated pnpm lockfile
+      #   run: pnpx ts-node -T .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
       # - name: Build docker image
       #   run: |
       #     docker build \
