@@ -158,46 +158,12 @@ jobs:
           --password-stdin
       - name: Should run tests?
         id: should-run
-        run: >
-          SUT_CHANGED=$(.scripts/ci/needs-build.ts ${{ matrix.package-name }})
-
-          echo "SUT needs build: $SUT_CHANGED"
-
-          DEPS=${{ matrix.deps }}
-
-          ANY_DEP_CHANGED=false
-
-          if [ ! -z "$DEPS" ]; then # if not empty
-            COMPOSE_FILE=${{ matrix.path }}/test/docker-compose.ci.yaml
-            touch $COMPOSE_FILE
-            echo 'services:' >> $COMPOSE_FILE
-            IFS=',' read -ra ARR <<< "$DEPS"
-            for DEP in "${ARR[@]}"; do
-              IMAGE="ghcr.io/$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG }}-$DEP"
-              docker manifest inspect $IMAGE:${{ github.sha }} > /dev/null
-              if [ $? == "0" ]; then
-                DEP_CHANGED=true
-                ANY_DEP_CHANGED=true
-                TAG=${{ github.sha }}
-              else
-                DEP_CHANGED=false
-                TAG=latest
-              fi
-              echo "$DEP changed: $DEP_CHANGED"
-              IMAGE_AND_TAG="$IMAGE:$TAG"
-              echo "  $DEP:" >> $COMPOSE_FILE
-              echo "    image: $IMAGE_AND_TAG" >> $COMPOSE_FILE
-            done
-            cat $COMPOSE_FILE
-          fi
-
-          SHOULD_RUN=false
-
-          if [ "$SUT_CHANGED" = "true" ] || [ "$ANY_DEP_CHANGED" = "true" ];
-          then
-            SHOULD_RUN=true
-          fi
-
+        env:
+          DEPS: ${{ matrix.deps }}
+          SUT_PACKAGE_NAME: ${{ matrix.package-name }}
+          SUT_PATH: ${{ matrix.path }}
+        run: |
+          SHOULD_RUN=$(.scripts/ci/should-run-integration-tests.sh)
           echo "::set-output name=result::$SHOULD_RUN"
       - name: Run integration tests
         if: ${{ steps.should-run.outputs.result == 'true' }}
