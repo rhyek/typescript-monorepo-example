@@ -8,6 +8,10 @@ on:
 env:
   DOCKER_BUILDKIT: 1
 
+defaults:
+  run:
+    shell: bash
+
 anchors:
   setup-pnpm: &setup-pnpm
     - name: Cache pnpm store

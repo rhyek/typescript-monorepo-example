@@ -4,7 +4,7 @@ import { AppModule } from 'src/app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  let port = process.env.PORT;
+  const port = process.env.PORT;
   if (typeof port === 'undefined') {
     throw new Error('Port not defined.');
   }

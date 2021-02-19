@@ -5,6 +5,9 @@ name: Tests
       - main
 env:
   DOCKER_BUILDKIT: 1
+defaults:
+  run:
+    shell: bash
 jobs:
   lint-unit-tests:
     name: Lint and Unit Tests
