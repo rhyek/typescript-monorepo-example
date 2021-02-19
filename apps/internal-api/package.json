@@ -8,7 +8,7 @@
   "scripts": {
     "build": "ttsc --build --force tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "dev": "NODE_ENV=development tsc-watch --compiler ttypescript/bin/tsc -b tsconfig.build.json --onSuccess \"node --inspect dist/main\"",
+    "dev": "PORT=3001 NODE_ENV=development tsc-watch --compiler ttypescript/bin/tsc -b tsconfig.build.json --onSuccess \"node --inspect dist/main\"",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "test:unit": "ttsc -b tsconfig.test.json && jest",

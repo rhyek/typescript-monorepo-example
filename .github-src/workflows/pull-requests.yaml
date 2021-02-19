@@ -79,22 +79,17 @@ jobs:
             fi
           fi
           echo "::set-output name=result::$NEEDS_BUILD"
-      - run: echo ${{ steps.needs-build.outputs.result }}
-      - name: Make dedicated pnpm lockfile
-        if: steps.needs-build.outputs.result == 'true'
-        run: .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
       - name: Build docker image
-        if: steps.needs-build.outputs.result == 'true'
+        if: ${{ steps.needs-build.outputs.result == 'true' }}
         run: |
+          .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
           docker build \
             -t ${{ env.IMAGE }}:${{ github.sha }} \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --cache-from=${{ env.IMAGE }}:latest \
             -f ${{ matrix.path }}/Dockerfile \
             .
-      - name: Docker push
-        if: steps.needs-build.outputs.result == 'true'
-        run: docker push ${{ env.IMAGE }}:${{ github.sha }}
+          docker push ${{ env.IMAGE }}:${{ github.sha }}
   integration-tests:
     name: 'Apps: integration tests'
     runs-on: ubuntu-20.04
@@ -105,14 +100,52 @@ jobs:
           - name: web-api
             package-name: '@my/web-api'
             path: apps/web-api
-            deps:
-              - internal-api
+            deps: internal-api
           - name: internal-api
             package-name: '@my/internal-api'
             path: apps/internal-api
-    #   defaults:
-    #     run:
-    #       working-directory: ${{ matrix.path }}
     steps:
-      - run: echo ${{ matrix.deps }}
-      # - run: pnpm run test:e2e --filter ${{ matrix.package-name }}
+      - uses: actions/checkout@v2
+      - *setup-pnpm
+      - <<: *node-modules-cache
+      - <<: *fetch-target-branch
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
+      - name: Should run tests?
+        id: should-run
+        run: |
+          SUT_CHANGED=$(.scripts/ci/needs-build.ts ${{ matrix.package-name }})
+          echo "SUT needs build: $SUT_CHANGED"
+          DEPS=${{ matrix.deps }}
+          ANY_DEP_CHANGED=false
+          if [ -z "$DEPS" ]; then
+            COMPOSE_FILE=${{ matrix.path }}/test/docker-compose.ci.yaml
+            touch $COMPOSE_FILE
+            echo 'services:' >> $COMPOSE_FILE
+            IFS=',' read -ra ARR <<< "$DEPS"
+            for DEP in "${ARR[@]}"; do
+              IMAGE="ghcr.io/$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG }}-$DEP"
+              docker manifest inspect $IMAGE:{{ github.sha }} > /dev/null
+              if [ $? == "0" ]; then
+                DEP_CHANGED=true
+                ANY_DEP_CHANGED=true
+                TAG=${{ github.sha }}
+              else
+                DEP_CHANGED=false
+                TAG=latest
+              fi
+              echo "$DEP changed: $DEP_CHANGED"
+              IMAGE_AND_TAG="$IMAGE:$TAG"
+              echo "  $DEP:" >> $COMPOSE_FILE
+              echo "    image: $IMAGE_AND_TAG" >> $COMPOSE_FILE
+            done
+            cat $COMPOSE_FILE
+          fi
+          SHOULD_RUN=false
+          if [ "$SUT_CHANGED" = "true" ] || [ "$ANY_DEP_CHANGED" = "true" ]; then
+            SHOULD_RUN=true
+          fi
+          echo "::set-output name=result::$SHOULD_RUN"
+      - name: Run integration tests
+        if: ${{ steps.should-run.outputs.result == 'true' }}
+        run: pnpm test:e2e --filter '${{ matrix.package-name }}'

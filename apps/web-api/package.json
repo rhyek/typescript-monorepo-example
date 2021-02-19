@@ -6,16 +6,12 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "dev": "PORT=3000 INTERNAL_API_PORT=3001 NODE_ENV=development tsc-watch --compiler ttypescript/bin/tsc -b tsconfig.build.json --onSuccess \"node --inspect dist/main\"",
     "build": "ttsc --build --force tsconfig.build.json",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "dev": "NODE_ENV=development tsc-watch --compiler ttypescript/bin/tsc -b tsconfig.build.json --onSuccess \"node --inspect dist/main\"",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "test:unit": "ttsc -b tsconfig.test.json && jest",
-    "test:watch": "ttsc -b tsconfig.test.json && jest --watch",
-    "test:cov": "ttsc -b tsconfig.test.json && jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "ttsc -b tsconfig.test.json && jest --config ./test/jest.config.js"
+    "test:e2e": "cd test && ./run"
   },
   "dependencies": {
     "@my/lib": "workspace:^1.0.0",
@@ -26,6 +22,7 @@
     "@types/jest": "^26.0.15",
     "@types/node": "^14.14.6",
     "@types/supertest": "^2.0.10",
+    "axios": "^0.21.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^6.6.3",

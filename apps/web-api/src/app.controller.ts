@@ -7,6 +7,11 @@ export class AppController {
 
   @Get()
   getHello(): string {
-    return this.appService.getHello();
+    return this.appService.getMyHello();
+  }
+
+  @Get('/ia')
+  async getInternalApiHello(): Promise<string> {
+    return this.appService.getInternalApiHello();
   }
 }
