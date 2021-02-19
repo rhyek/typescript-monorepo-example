@@ -72,7 +72,7 @@ jobs:
       - name: Should build docker image?
         id: needs-build
         run: |
-          NEEDS_BUILD=$(.scripts/ci/needs-build.ts ${{ matrix.package-name }})
+          NEEDS_BUILD=$(pnpx ts-node -T .scripts/ci/needs-build.ts ${{ matrix.package-name }})
           if [ "$NEEDS_BUILD" == "false" ]; then
             docker manifest inspect ${{ env.IMAGE }}:latest > /dev/null
             if [ $? == "1" ]; then
