@@ -10,16 +10,28 @@ env:
 
 anchors:
   setup-pnpm: &setup-pnpm
-    name: Setup pnpm
-    uses: pnpm/action-setup@v1.2.1
-    with:
-      version: 5.17.2
+    - name: Cache pnpm store
+      uses: actions/cache@v2
+      with:
+        path: ~/.pnpm-store
+        key: ${{ runner.os }}-tests-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-tests-pnpm-store-
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v1.2.1
+      with:
+        version: 5.17.2
+        run_install: |
+          - args: [--global, typescript, ts-node]
   node-modules-cache: &node-modules-cache
     name: Cache node_modules
     uses: actions/cache@v2
     with:
       path: '**/node_modules'
       key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
+  fetch-target-branch: &fetch-target-branch
+    name: Fetch target branch
+    run: git fetch --no-tags --prune --depth=1 origin +refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
 
 jobs:
   lint-unit:
@@ -27,61 +39,61 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - <<: *setup-pnpm
-      - name: Cache pnpm store
-        uses: actions/cache@v2
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-tests-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-tests-pnpm-store-
+      - *setup-pnpm
       - <<: *node-modules-cache
+      - <<: *fetch-target-branch
       - run: pnpm i --frozen-lockfile
-      - name: Fetch target branch
-        run: git fetch --no-tags --prune --depth=1 origin +refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
-      - run: pnpx ts-node -T .scripts/ci/run-lint
-      - run: pnpx ts-node -T .scripts/ci/run-tests unit
-  # unit-tests:
-  #   name: Unit tests
-  #   runs-on: ubuntu-20.04
-  #   needs: [pre-test]
-  #   strategy:
-  #     matrix:
-  #       path: [src/lib, src/web-api]
-  #   defaults:
-  #     run:
-  #       working-directory: ${{ matrix.path }}
-  #   steps:
-  #     - *pnpm-setup
-  #     - <<: *node-modules-cache
-  #     - run: pnpm lint
-  #     - run: pnpm test:unit
-  # apps-docker-build:
-  #   name: 'Apps: docker build'
-  #   runs-on: ubuntu-20.04
-  #   needs: [unit-tests]
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - app-name: web-api
-  #           path: src/web-api
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Docker login
-  #       run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
-  #     - name: Set image name
-  #       run: echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ matrix.app-name }}" >> $GITHUB_ENV
-  #     - name: Build docker image
-  #       run: |
-  #         docker build \
-  #           -t ${{ env.IMAGE }}:${{ github.sha }} \
-  #           --build-arg BUILDKIT_INLINE_CACHE=1 \
-  #           --cache-from=${{ env.IMAGE }}:latest \
-  #           --cache-from=${{ env.IMAGE }}:${{ github.sha }} \
-  #           -f ${{ matrix.path }}/Dockerfile \
-  #           .
-  #     - name: Docker push
-  #       run: docker push ${{ env.IMAGE }}:${{ github.sha }}
+      - run: .scripts/ci/run-lint.ts
+      - run: .scripts/ci/run-tests.ts unit
+  apps-docker-build:
+    name: 'Apps: docker build'
+    runs-on: ubuntu-20.04
+    needs: [lint-unit]
+    strategy:
+      matrix:
+        include:
+          - name: web-api
+            package-name: '@my/web-api'
+            path: apps/web-api
+          - name: internal-api
+            package-name: '@my/internal-api'
+            path: apps/internal-api
+    steps:
+      - uses: actions/checkout@v2
+      - *setup-pnpm
+      - <<: *node-modules-cache
+      - <<: *fetch-target-branch
+      - name: Should build
+        run: .scripts/ci/should-build.ts ${{ matrix.package-name }}
+      - name: Make dedicated pnpm lockfile
+        run: .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
+      - name: Docker login
+        run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
+      - name: Set image name
+        run: echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ matrix.app-name }-${{ env.GITHUB_BASE_REF_SLUG }}" >> $GITHUB_ENV
+      - name: Should build docker image?
+        id: needs-build
+        run: |
+          NEEDS_BUILD=$(.scripts/ci/needs-build.ts ${{ matrix.package-name }})
+          if [ "$NEEDS_BUILD" == "false" ]; then
+            docker manifest inspect ${{ env.IMAGE }}:latest > /dev/null
+            if [ $? == "1" ]; then
+              NEEDS_BUILD="true"
+            fi
+          fi
+          echo '::set-output name=ANSWER::$NEEDS_BUILD'
+      # - name: Build docker image
+      #   run: |
+      #     docker build \
+      #       -t ${{ env.IMAGE }}:${{ github.sha }} \
+      #       --build-arg BUILDKIT_INLINE_CACHE=1 \
+      #       --cache-from=${{ env.IMAGE }}:latest \
+      #       -f ${{ matrix.path }}/Dockerfile \
+      #       .
+      # - name: Docker push
+      #   run: docker push ${{ env.IMAGE }}:${{ github.sha }}
   # apps-integration-tests:
   #   name: 'Apps: integration tests'
   #   runs-on: ubuntu-20.04

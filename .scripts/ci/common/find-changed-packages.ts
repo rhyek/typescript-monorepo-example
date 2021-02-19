@@ -15,6 +15,7 @@ import { Project } from '@pnpm/find-workspace-packages';
 import { findWorkspaceDir } from './pnpm-helpers';
 import { lockfileName } from './consts';
 import { makeDedicatedLockfileForPackage } from './dedicated-lockfile';
+import { debug } from './log';
 
 export type Selector = PackageSelector & {
   diffExclusions?: RegExp[];
@@ -72,6 +73,7 @@ async function filterProjects(
   await Promise.all(
     selectors.map(async (selector) => {
       const {
+        namePattern,
         parentDir,
         diffExclusions = [],
         excludeSelf,
@@ -80,7 +82,7 @@ async function filterProjects(
       } = selector;
       let packages = await filterPkgsBySelectorObjects(
         allProjects,
-        [{ parentDir }],
+        [{ namePattern, parentDir }],
         { workspaceDir },
       );
       for (const [packageBaseDir, config] of Object.entries(
@@ -136,7 +138,6 @@ const getDiffFiles = mem(
       'diff',
       '--name-only',
       comparisonRef,
-      'HEAD',
     ]);
     const files = stdout.split('\n').map((f) => path.resolve(workspaceDir, f));
     return files;
@@ -150,7 +151,6 @@ const generateLockfileFromRef = mem(async (ref: string) => {
   await fs.writeFile(oldLockfilePath, stdout, { encoding: 'utf8' });
   process.on('exit', () => {
     fsLegacy.rmSync(oldLockfilePath);
-    console.log(`Deleted ${oldLockfilePath}.`.italic.yellow);
   });
   return { content: stdout, dir: tempDir, path: oldLockfilePath };
 });
@@ -160,31 +160,31 @@ Object.defineProperty(RegExp.prototype, 'toJSON', {
 });
 
 function logParams(selectors: Selector[], ref: string) {
-  console.log('Finding changed packages with:');
-  console.log('  Selectors:');
+  debug('Finding changed packages with:');
+  debug('  Selectors:');
   for (const selector of selectors) {
     let i = 0;
     for (const [key, value] of Object.entries(selector)) {
       if (i === 0) {
-        console.log(`    -  ${key}: ${value}`);
+        debug(`    -  ${key}: ${value}`);
       } else {
-        console.log(`       ${key}: ${value}`);
+        debug(`       ${key}: ${value}`);
       }
       i++;
     }
   }
-  console.log(`  Against ref: ${ref}`);
+  debug(`  Against ref: ${ref}`);
 }
 
 function logResult(result: PackageGraph<Project>) {
-  console.log('Changed:');
+  debug('Changed:');
   const nodes = Object.values(result);
   if (nodes.length > 0) {
     for (const node of nodes) {
-      console.log(`  - ${node.package.manifest.name}`);
+      debug(`  - ${node.package.manifest.name}`);
     }
   } else {
-    console.log('  No changes.'.blue);
+    debug('  No changes.'.blue);
   }
 }
 
