@@ -28,7 +28,7 @@ jobs:
         id: check-exists
         run: |
           docker manifest inspect ${{ env.IMAGE }}:${{ github.sha }} > /dev/null
-          RESULT=$([ "$?" == 0 ] && echo 'true' || echo 'false')
+          RESULT=$([ "$?" == '0' ] && echo 'true' || echo 'false')
           echo "::set-output name=result::$RESULT"
       - name: Delete image
         if: ${{ steps.check-exists.outputs.result == true && github.event.pull_request.merged == false }}
