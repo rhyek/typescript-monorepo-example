@@ -5,52 +5,60 @@ on:
     branches:
       - main
 
-env:
-  HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-  WEB_API_APP: typescript-monorepo
-
-anchors:
-  setup: &setup
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: '14.15.4'
-    - run: curl -s https://cli-assets.heroku.com/install.sh | sh
-    - run: heroku container:login
-  report: &report
-    name: Slack Notification
-    uses: rtCamp/action-slack-notify@v2
-    if: ${{ cancelled() || failure() }}
-    env:
-      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-      SLACK_USERNAME: github-actions
-      SLACK_COLOR: ${{ job.status == 'success' && 'good' || job.status == 'cancelled' && '#808080' || 'danger' }}
-
 jobs:
-  publish-apps:
-    name: Publish apps
+  lol:
+    name: lmao
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        include:
-          - path: src/web-api
-            heroku_app_key: WEB_API_APP
-    defaults:
-      run:
-        working-directory: ${{ matrix.path }}
     steps:
-      - *setup
-      - run: heroku container:push --app=${{ env[matrix.heroku_app_key] }} --context-path=../../ web
-      # - run: heroku container:push --app=error --context-path=../../ web
-      - <<: *report
+      - env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
+# env:
+#   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+#   WEB_API_APP: typescript-monorepo
 
-  deploy-apps:
-    name: Deploy apps
-    runs-on: ubuntu-20.04
-    needs: [publish-apps]
-    steps:
-      - *setup
-      - run: heroku container:release web --app=$WEB_API_APP
-      # - run: heroku container:release web --app=error
-      - <<: *report
-        if: ${{ always() }}
+# anchors:
+#   setup: &setup
+#     - uses: actions/checkout@v2
+#     - uses: actions/setup-node@v2
+#       with:
+#         node-version: '14.15.4'
+#     - run: curl -s https://cli-assets.heroku.com/install.sh | sh
+#     - run: heroku container:login
+#   report: &report
+#     name: Slack Notification
+#     uses: rtCamp/action-slack-notify@v2
+#     if: ${{ cancelled() || failure() }}
+#     env:
+#       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+#       SLACK_USERNAME: github-actions
+#       SLACK_COLOR: ${{ job.status == 'success' && 'good' || job.status == 'cancelled' && '#808080' || 'danger' }}
+
+# jobs:
+#   publish-apps:
+#     name: Publish apps
+#     runs-on: ubuntu-20.04
+#     strategy:
+#       matrix:
+#         include:
+#           - path: src/web-api
+#             heroku_app_key: WEB_API_APP
+#     defaults:
+#       run:
+#         working-directory: ${{ matrix.path }}
+#     steps:
+#       - *setup
+#       - run: heroku container:push --app=${{ env[matrix.heroku_app_key] }} --context-path=../../ web
+#       # - run: heroku container:push --app=error --context-path=../../ web
+#       - <<: *report
+
+#   deploy-apps:
+#     name: Deploy apps
+#     runs-on: ubuntu-20.04
+#     needs: [publish-apps]
+#     steps:
+#       - *setup
+#       - run: heroku container:release web --app=$WEB_API_APP
+#       # - run: heroku container:release web --app=error
+#       - <<: *report
+#         if: ${{ always() }}

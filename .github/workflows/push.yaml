@@ -3,59 +3,11 @@ name: Build and Deploy
   push:
     branches:
       - main
-env:
-  HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-  WEB_API_APP: typescript-monorepo
 jobs:
-  publish-apps:
-    name: Publish apps
+  lol:
+    name: lmao
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        include:
-          - path: src/web-api
-            heroku_app_key: WEB_API_APP
-    defaults:
-      run:
-        working-directory: ${{ matrix.path }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: 14.15.4
-      - run: curl -s https://cli-assets.heroku.com/install.sh | sh
-      - run: heroku container:login
-      - run: >-
-          heroku container:push --app=${{ env[matrix.heroku_app_key] }}
-          --context-path=../../ web
-      - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        if: ${{ cancelled() || failure() }}
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_USERNAME: github-actions
-          SLACK_COLOR: >-
-            ${{ job.status == 'success' && 'good' || job.status == 'cancelled'
-            && '#808080' || 'danger' }}
-  deploy-apps:
-    name: Deploy apps
-    runs-on: ubuntu-20.04
-    needs:
-      - publish-apps
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: 14.15.4
-      - run: curl -s https://cli-assets.heroku.com/install.sh | sh
-      - run: heroku container:login
-      - run: heroku container:release web --app=$WEB_API_APP
-      - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        if: ${{ always() }}
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_USERNAME: github-actions
-          SLACK_COLOR: >-
-            ${{ job.status == 'success' && 'good' || job.status == 'cancelled'
-            && '#808080' || 'danger' }}
+      - env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
