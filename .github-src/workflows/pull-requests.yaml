@@ -31,6 +31,9 @@ anchors:
   fetch-target-branch: &fetch-target-branch
     name: Fetch target branch
     run: git fetch --no-tags --prune --depth=1 origin +refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+  docker-login: &docker-login
+    name: Docker login
+    run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
 
 jobs:
   lint-unit-tests:
@@ -64,8 +67,7 @@ jobs:
       - <<: *fetch-target-branch
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
-      - name: Docker login
-        run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
+      - <<: *docker-login
       - name: Set image name
         run: echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}" >> $GITHUB_ENV
       - name: Should build docker image?
@@ -111,8 +113,7 @@ jobs:
       - <<: *fetch-target-branch
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
-      - name: Docker login
-        run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
+      - <<: *docker-login
       - name: Should run tests?
         id: should-run
         env:
