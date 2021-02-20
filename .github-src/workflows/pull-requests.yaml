@@ -121,8 +121,9 @@ jobs:
           SUT_PATH: ${{ matrix.path }}
           DEPS: ${{ matrix.deps }}
         run: |
-          SHOULD_RUN=$(.scripts/ci/should-run-integration-tests.sh)
+          .scripts/ci/should-run-integration-tests.sh > /dev/null
+          SHOULD_RUN=$([ "$?" == '0' ] && echo 'true' || echo 'false')
           echo "::set-output name=result::$SHOULD_RUN"
       - name: Run integration tests
-        if: ${{ steps.should-run.outputs.result == 'true' }}
+        if: ${{ steps.should-run.outputs.result == true }}
         run: pnpm test:e2e --filter '${{ matrix.package-name }}'

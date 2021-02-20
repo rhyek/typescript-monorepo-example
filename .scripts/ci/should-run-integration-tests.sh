@@ -30,4 +30,7 @@ SHOULD_RUN=false
 if [ "$SUT_CHANGED" = "true" ] || [ "$ANY_DEP_CHANGED" = "true" ]; then
   SHOULD_RUN=true
 fi
-echo $SHOULD_RUN
+echo "should run: $SHOULD_RUN"
+if [ "$SHOULD_RUN" = 'false' ]; then
+  exit 1
+fi
