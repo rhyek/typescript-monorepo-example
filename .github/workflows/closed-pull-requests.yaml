@@ -1,0 +1,45 @@
+name: Closed PRs
+'on':
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+jobs:
+  update-latest:
+    name: Update latest tag
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        name:
+          - web-api
+          - internal-api
+    steps:
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
+      - name: Docker login
+        run: >-
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
+          --password-stdin
+      - name: Set image name
+        run: >-
+          echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG
+          }}-${{ matrix.name }}" >> $GITHUB_ENV
+      - name: New image exists?
+        id: check-exists
+        run: |
+          docker manifest inspect ${{ env.IMAGE }}:${{ github.sha }} > /dev/null
+          RESULT=$([ $? = 0 ] && echo 'true' || echo 'false')
+          echo "::set-output name=result::$RESULT"
+      - name: Delete image
+        if: >-
+          ${{ steps.check-exists.outputs.result == 'true' &&
+          github.event.pull_request.merged == false }}
+        run: |
+          echo 'delete'
+      - name: Update tag
+        if: >-
+          ${{ steps.check-exists.outputs.result == 'true' &&
+          github.event.pull_request.merged == true }}
+        run: |
+          echo 'update'

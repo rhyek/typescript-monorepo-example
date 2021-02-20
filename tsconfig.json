@@ -20,7 +20,8 @@
     ]
   },
   "references": [
-    { "path": "./src/lib/tsconfig.build.json" },
-    { "path": "./src/web-api/tsconfig.build.json" }
+    { "path": "./shared/lib/tsconfig.build.json" },
+    { "path": "./apps/web-api/tsconfig.build.json" },
+    { "path": "./apps/internal-api/tsconfig.build.json" }
   ]
 }

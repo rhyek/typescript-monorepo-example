@@ -1,0 +1,5 @@
+services:
+  internal-api:
+    build:
+      context: ../../..
+      dockerfile: apps/internal-api/Dockerfile
