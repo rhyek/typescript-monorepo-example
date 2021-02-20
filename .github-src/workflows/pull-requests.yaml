@@ -75,8 +75,9 @@ jobs:
         run: |
           NEEDS_BUILD=$(.scripts/ci/needs-build.ts ${{ matrix.package-name }})
           if [ "$NEEDS_BUILD" == "false" ]; then
-            docker manifest inspect ${{ env.IMAGE }}:latest > /dev/null
-            if [ $? == "1" ]; then
+            EXIT_CODE=0
+            docker manifest inspect ${{ env.IMAGE }}:latest || EXIT_CODE=$?
+            if [ $EXIT_CODE != 0 ]; then
               NEEDS_BUILD="true"
             fi
           fi
@@ -121,8 +122,9 @@ jobs:
           SUT_PATH: ${{ matrix.path }}
           DEPS: ${{ matrix.deps }}
         run: |
-          .scripts/ci/should-run-integration-tests.sh > /dev/null
-          SHOULD_RUN=$([ $? = 0 ] && echo 'true' || echo 'false')
+          EXIT_CODE=0
+          .scripts/ci/should-run-integration-tests.sh || EXIT_CODE=$?
+          SHOULD_RUN=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
           echo "::set-output name=result::$SHOULD_RUN"
       - name: Run integration tests
         if: ${{ steps.should-run.outputs.result == 'true' }}

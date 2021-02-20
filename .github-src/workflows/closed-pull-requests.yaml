@@ -12,8 +12,8 @@ anchors:
     run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
 
 jobs:
-  update-latest:
-    name: Update latest tag
+  delete-unused:
+    name: Delete unused tag
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -23,18 +23,16 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - <<: *docker-login
       - name: Set image name
-        run: echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}" >> $GITHUB_ENV
+        id: image-name
+        run: echo "::set-output name=result::ghcr.io/$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}"
       - name: New image exists?
         id: check-exists
         run: |
-          docker manifest inspect ${{ env.IMAGE }}:${{ github.sha }} > /dev/null
-          RESULT=$([ $? = 0 ] && echo 'true' || echo 'false')
+          EXIT_CODE=0
+          docker manifest inspect ${{ steps.image-name.outputs.result }}:${{ github.sha }} || EXIT_CODE=$?
+          RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
           echo "::set-output name=result::$RESULT"
       - name: Delete image
         if: ${{ steps.check-exists.outputs.result == 'true' && github.event.pull_request.merged == false }}
         run: |
           echo 'delete'
-      - name: Update tag
-        if: ${{ steps.check-exists.outputs.result == 'true' && github.event.pull_request.merged == true }}
-        run: |
-          echo 'update'

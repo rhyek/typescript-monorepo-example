@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 SUT_CHANGED=$(.scripts/ci/needs-build.ts $SUT_PACKAGE_NAME)
 echo "SUT needs build: $SUT_CHANGED"
 ANY_DEP_CHANGED=false
@@ -9,8 +11,9 @@ if [ ! -z "$DEPS" ]; then # if not empty
   IFS=',' read -ra ARR <<< "$DEPS"
   for DEP in "${ARR[@]}"; do
     IMAGE="ghcr.io/$GITHUB_REPOSITORY-$GITHUB_BASE_REF_SLUG-$DEP"
-    docker manifest inspect $IMAGE:$GITHUB_SHA > /dev/null
-    if [ $? == "0" ]; then
+    EXIT_CODE=0
+    docker manifest inspect $IMAGE:$GITHUB_SHA || EXIT_CODE=$?
+    if [ $EXIT_CODE = 0 ]; then
       DEP_CHANGED=true
       ANY_DEP_CHANGED=true
       TAG=$GITHUB_SHA
