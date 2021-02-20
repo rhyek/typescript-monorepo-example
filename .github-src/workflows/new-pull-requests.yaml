@@ -41,6 +41,9 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
+      - env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
       - *setup-pnpm
       - <<: *node-modules-cache
       - <<: *fetch-target-branch
