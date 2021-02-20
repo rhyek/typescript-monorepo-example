@@ -15,6 +15,7 @@ jobs:
   delete-unused:
     name: Delete unused tag
     runs-on: ubuntu-20.04
+    if: ${{ github.event.pull_request.merged == false }}
     strategy:
       matrix:
         name: [web-api, internal-api]
@@ -33,6 +34,6 @@ jobs:
           RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
           echo "::set-output name=result::$RESULT"
       - name: Delete image
-        if: ${{ steps.check-exists.outputs.result == 'true' && github.event.pull_request.merged == false }}
+        if: ${{ steps.check-exists.outputs.result == 'true' }}
         run: |
           echo 'delete'
