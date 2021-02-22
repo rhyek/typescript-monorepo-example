@@ -25,4 +25,4 @@ jobs:
         run: echo 'is a pr with sha ${{ steps.pr-sha.outputs.result }}'
       - name: Is not a PR
         if: steps.pr-sha.outputs.result == 'null'
-        run: echo 'is not a PR''
+        run: echo 'is not a PR'
