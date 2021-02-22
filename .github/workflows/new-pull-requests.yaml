@@ -6,12 +6,8 @@ name: Tests
 env:
   DOCKER_BUILDKIT: 1
 jobs:
-  debug-github-context:
-    name: lmao
+  print-usable-sha:
+    name: Rofl
     runs-on: ubuntu-20.04
     steps:
-      - name: Inject slug/short variables
-        uses: rlespinasse/github-slug-action@v3.x
-      - env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
+      - run: echo ${{ github.event.pull_request.head.sha }}

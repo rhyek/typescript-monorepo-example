@@ -36,15 +36,20 @@ anchors:
     run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
 
 jobs:
-  debug-github-context:
-    name: lmao
+  print-usable-sha:
+    name: Rofl
     runs-on: ubuntu-20.04
     steps:
-      - name: Inject slug/short variables
-        uses: rlespinasse/github-slug-action@v3.x
-      - env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
+      - run: echo ${{ github.event.pull_request.head.sha }}
+  # debug-github-context:
+  #   name: lmao
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - name: Inject slug/short variables
+  #       uses: rlespinasse/github-slug-action@v3.x
+  #     - env:
+  #         GITHUB_CONTEXT: ${{ toJSON(github) }}
+  #       run: echo "$GITHUB_CONTEXT"
   # lint-unit-tests:
   #   name: Lint and Unit Tests
   #   runs-on: ubuntu-20.04
