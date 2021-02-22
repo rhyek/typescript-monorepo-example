@@ -38,3 +38,5 @@ CMD ["pnpm", "start:prod"]
 # DOCKER_BUILDKIT=1 docker build -t rhyek/typescript-monorepo-web-api:latest -f ./src/web-api/Dockerfile . --cache-from=rhyek/typescript-monorepo-web-api:latest --build-arg BUILDKIT_INLINE_CACHE=1
 # docker push rhyek/typescript-monorepo-web-api:latest
 # docker rmi rhyek/typescript-monorepo-web-api:latest
+
+# some text
