@@ -37,7 +37,7 @@ anchors:
 
 jobs:
   print-usable-sha:
-    name: Rofl
+    name: Rofl!
     runs-on: ubuntu-20.04
     steps:
       - run: echo ${{ github.event.pull_request.head.sha }}
