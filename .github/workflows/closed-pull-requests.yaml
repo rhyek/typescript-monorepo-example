@@ -1,8 +1,10 @@
-name: Build and Deploy
+name: Closed PRs
 'on':
-  push:
+  pull_request:
     branches:
       - main
+    types:
+      - closed
 jobs:
   debug-github-context:
     name: lmao

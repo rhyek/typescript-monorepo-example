@@ -1,8 +1,10 @@
-name: Build and Deploy
+name: Tests
 'on':
-  push:
+  pull_request:
     branches:
       - main
+env:
+  DOCKER_BUILDKIT: 1
 jobs:
   debug-github-context:
     name: lmao

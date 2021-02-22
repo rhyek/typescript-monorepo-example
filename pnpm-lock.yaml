@@ -10,6 +10,7 @@ importers:
       '@types/node': 14.14.28
       '@typescript-eslint/eslint-plugin': 4.14.0_7bcd4dc09d6fb0b6dd23749b6cf31217
       '@typescript-eslint/parser': 4.14.0_522781a0d4040bb3c9c4dc6d217b949c
+      colors: 1.4.0
       eslint: 7.18.0
       eslint-config-prettier: 7.1.0_eslint@7.18.0
       eslint-plugin-prettier: 3.3.1_efe762de77ffca883b5e24b22265768d
@@ -17,6 +18,7 @@ importers:
       find-up: 5.0.0
       husky: 4.3.8
       js-yaml: 4.0.0
+      mem: 8.0.0
       prettier: 2.2.1
       tempy: 1.0.0
       ts-node: 9.1.1_typescript@4.2.0-dev.20210208
@@ -32,6 +34,7 @@ importers:
       '@types/node': ^14.14.28
       '@typescript-eslint/eslint-plugin': ^4.6.1
       '@typescript-eslint/parser': ^4.6.1
+      colors: ^1.4.0
       eslint: ^7.12.1
       eslint-config-prettier: 7.1.0
       eslint-plugin-prettier: ^3.1.4
@@ -39,6 +42,7 @@ importers:
       find-up: ^5.0.0
       husky: ^4.3.8
       js-yaml: ^4.0.0
+      mem: ^8.0.0
       prettier: ^2.2.1
       tempy: ^1.0.0
       ts-node: ^9.1.1
@@ -110,6 +114,7 @@ importers:
       '@types/jest': 26.0.20
       '@types/node': 14.14.28
       '@types/supertest': 2.0.10
+      axios: 0.21.1
       reflect-metadata: 0.1.13
       rimraf: 3.0.2
       rxjs: 6.6.3
@@ -141,6 +146,7 @@ importers:
       '@types/jest': ^26.0.15
       '@types/node': ^14.14.6
       '@types/supertest': ^2.0.10
+      axios: ^0.21.1
       eslint: ^7.12.1
       jest: ^26.6.3
       prettier: ^2.1.2
@@ -2134,7 +2140,7 @@ packages:
       integrity: sha512-xh1Rl34h6Fi1DC2WWKfxUTVqRsNnr6LsKz2+hfwDxQJWmrx8+c7ylaqBMcHfl1U1r2dsifOvKX3LQuLNZ+XSvA==
   /axios/0.21.1:
     dependencies:
-      follow-redirects: 1.13.1
+      follow-redirects: 1.13.2
     dev: false
     resolution:
       integrity: sha512-dKQiRHxGD9PPRIUNIWvZhPTPpl1rf/OxTYKsqKUDjBwYylTvV7SjSHJb9ratfyzM6wCdLCOYLzs73qpg5c4iGA==
@@ -2618,7 +2624,6 @@ packages:
     dev: true
     engines:
       node: '>=0.1.90'
-    optional: true
     resolution:
       integrity: sha512-a+UqTh4kgZg/SlGvfbzDHpgRu7AAQOmmqRHJnxhRZICKFUT91brVhNNt58CMWU9PsBbv3PDCZUHbVxuDiH2mtA==
   /combined-stream/1.0.8:
@@ -3623,7 +3628,7 @@ packages:
     dev: true
     resolution:
       integrity: sha512-zAoAQiudy+r5SvnSw3KJy5os/oRJYHzrzja/tBDqrZtNhUw8bt6y8OBzMWcjWr+8liV8Eb6yOhw8WZ7VFZ5ZzA==
-  /follow-redirects/1.13.1:
+  /follow-redirects/1.13.2:
     dev: false
     engines:
       node: '>=4.0'
@@ -3633,7 +3638,7 @@ packages:
       debug:
         optional: true
     resolution:
-      integrity: sha512-SSG5xmZh1mkPGyKzjZP8zLjltIfpW32Y5QpdNJyjcfGxK3qo3NDDkZOZSFiGn1A6SclQxY9GzEwAHQ3dmYRWpg==
+      integrity: sha512-6mPTgLxYm3r6Bkkg0vNM0HTjfGrOEtsfbhagQvbxDEsEkpNhw582upBaoRZylzen6krEmxXJgt9Ju6HiI4O7BA==
   /for-in/1.0.2:
     dev: true
     engines:

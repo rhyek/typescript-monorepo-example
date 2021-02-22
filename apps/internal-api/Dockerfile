@@ -4,8 +4,7 @@ RUN npm i -g pnpm
 
 WORKDIR /monorepo
 
-COPY pnpm-workspace.yaml ./
-COPY dedicated-pnpm-lock.yaml ./pnpm-lock.yaml
+COPY pnpm-*.yaml ./
 COPY shared/lib/package.json /monorepo/shared/lib/
 COPY apps/internal-api/package.json /monorepo/apps/internal-api/
 RUN pnpm i --frozen-lockfile --prod

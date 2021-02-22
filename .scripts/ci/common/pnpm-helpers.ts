@@ -1,48 +1,45 @@
 import path from 'path';
+import 'colors';
 import execa from 'execa';
 import findUp from 'find-up';
-import { PackageGraph } from '@pnpm/filter-workspace-packages';
-import { Project } from '@pnpm/find-workspace-packages';
 
-export async function pnpmExec(
-  command: string[],
-  packages: PackageGraph<Project>,
+async function run(
+  command: string,
+  packageNames: string[],
+  args: string[],
+  silent: boolean,
 ) {
-  const nodes = Object.values(packages);
-  if (nodes.length > 0) {
+  if (packageNames.length > 0) {
     await execa(
       'pnpm',
       [
-        'exec',
+        command,
         '--parallel',
         '--parseable',
-        ...nodes.map((n) => ['--filter', n.package.manifest.name!]),
-        '--',
-        ...command,
+        ...packageNames.map((packageName) => ['--filter', packageName]),
+        ...args,
       ].flat(1),
-      { stdio: 'inherit' },
+      silent ? undefined : { stdio: 'inherit' },
     );
+  } else if (!silent) {
+    console.log('No packages selected.'.blue.italic);
   }
+}
+
+export async function pnpmExec(
+  command: string[],
+  packageNames: string[],
+  silent = false,
+) {
+  await run('exec', packageNames, ['--', ...command], silent);
 }
 
 export async function pnpmRun(
   command: string,
-  packages: PackageGraph<Project>,
+  packageNames: string[],
+  silent = false,
 ) {
-  const nodes = Object.values(packages);
-  if (nodes.length > 0) {
-    await execa(
-      'pnpm',
-      [
-        'run',
-        command,
-        '--parallel',
-        '--parseable',
-        ...nodes.map((n) => ['--filter', n.package.manifest.name!]),
-      ].flat(1),
-      { stdio: 'inherit' },
-    );
-  }
+  await run('run', packageNames, [command], silent);
 }
 
 export async function findWorkspaceDir() {

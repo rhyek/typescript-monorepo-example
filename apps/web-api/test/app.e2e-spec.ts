@@ -21,4 +21,11 @@ describe('AppController (e2e)', () => {
       .get('/')
       .expect('HELLO');
   });
+
+  it('/ (GET) on internal-api', () => {
+    // prettier-ignore
+    return request(app.getHttpServer())
+      .get('/ia')
+      .expect('HELLO');
+  });
 });

@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import tempy from 'tempy';
 import {
@@ -9,11 +9,6 @@ import { readWantedLockfile, writeWantedLockfile } from '@pnpm/lockfile-file';
 import { pruneSharedLockfile } from '@pnpm/prune-lockfile';
 import { lockfileName } from './consts';
 import { findWorkspaceDir } from './pnpm-helpers';
-
-function countLines(path: string) {
-  const f = fs.readFileSync(path, { encoding: 'utf8' });
-  return f.split('\n').length;
-}
 
 export async function makeDedicatedLockfileForPackage(
   originLockfileDir: string,
@@ -39,9 +34,6 @@ export async function makeDedicatedLockfileForPackage(
   if (!lockfile) {
     throw new Error('No lockfile found.');
   }
-  const originalLineCount = countLines(
-    path.resolve(workspaceDir, lockfileName),
-  );
   const allImporters = lockfile.importers;
   lockfile.importers = {};
   for (const [importerId, importer] of Object.entries(allImporters)) {
@@ -54,18 +46,12 @@ export async function makeDedicatedLockfileForPackage(
   const tempDir = tempy.directory();
   await writeWantedLockfile(tempDir, dedicatedLockfile);
   const dedicatedLockfilePath = path.resolve(tempDir, lockfileName);
-  const dedicatedLineCount = countLines(dedicatedLockfilePath);
-  const dedicatedLockfileContent = fs.readFileSync(dedicatedLockfilePath, {
+  const dedicatedLockfileContent = await fs.readFile(dedicatedLockfilePath, {
     encoding: 'utf8',
   });
-  fs.rmSync(dedicatedLockfilePath);
+  await fs.rm(dedicatedLockfilePath);
 
   return {
     content: dedicatedLockfileContent,
-    lineCount: {
-      original: originalLineCount,
-      dedicated: dedicatedLineCount,
-      difference: originalLineCount - dedicatedLineCount,
-    },
   };
 }
