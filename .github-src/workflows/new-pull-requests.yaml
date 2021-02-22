@@ -95,7 +95,7 @@ jobs:
   #         fi
   #         echo "::set-output name=result::$NEEDS_BUILD"
   #     - name: Build docker image
-  #       if: ${{ steps.needs-build.outputs.result == 'true' }}
+  #       if: steps.needs-build.outputs.result == 'true'
   #       run: |
   #         .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
   #         docker build \
@@ -139,5 +139,5 @@ jobs:
   #         SHOULD_RUN=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
   #         echo "::set-output name=result::$SHOULD_RUN"
   #     - name: Run integration tests
-  #       if: ${{ steps.should-run.outputs.result == 'true' }}
+  #       if: steps.should-run.outputs.result == 'true'
   #       run: pnpm test:e2e --filter '${{ matrix.package-name }}'

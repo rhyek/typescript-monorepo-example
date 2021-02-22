@@ -6,15 +6,37 @@ on:
       - main
 
 jobs:
-  debug-github-context:
-    name: lmao
+  # debug-github-context:
+  #   name: lmao
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - name: Inject slug/short variables
+  #       uses: rlespinasse/github-slug-action@v3.x
+  #     - env:
+  #         GITHUB_CONTEXT: ${{ toJSON(github) }}
+  #       run: echo "$GITHUB_CONTEXT"
+  pr-sha:
+    name: PR SHA
     runs-on: ubuntu-20.04
     steps:
-      - name: Inject slug/short variables
-        uses: rlespinasse/github-slug-action@v3.x
-      - env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
+      - name: Get PR SHA
+        id: pr-sha
+        run: |
+          SHA=$(curl \
+            -s \
+            -H 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
+            -H 'accept: application/vnd.github.groot-preview+json' \
+            GET 'https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/pulls' \
+            | jq -rM '.[0].head.sha' 2> /dev/null \
+            || echo null
+          )
+          echo "::set-output name=result::$SHA"
+      - name: Is PR
+        if: steps.pr-sha.outputs.result != 'null'
+        run: echo 'is a pr with sha ${{ steps.pr-sha.outputs.result }}'
+      - name: Is not a PR
+        if: steps.pr-sha.outputs.result == 'null'
+        run: echo 'is not a PR''
 # env:
 #   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 #   WEB_API_APP: typescript-monorepo
