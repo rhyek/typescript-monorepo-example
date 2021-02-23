@@ -29,8 +29,7 @@ jobs:
       - name: New image exists?
         id: check-exists
         run: |
-          EXIT_CODE=0
-          docker manifest inspect ${{ steps.image-name.outputs.result }}:${{ github.event.pull_request.number }} || EXIT_CODE=$?
+          docker manifest inspect ${{ steps.image-name.outputs.result }}:${{ github.event.pull_request.number }} && EXIT_CODE=0 || EXIT_CODE=$?
           RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
           echo "::set-output name=result::$RESULT"
       - name: Delete image

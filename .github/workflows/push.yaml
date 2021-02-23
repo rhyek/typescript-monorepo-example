@@ -54,10 +54,8 @@ jobs:
           --password-stdin
       - id: image-pulled
         run: >
-          EXIT_CODE=0
-
           docker pull ${{ steps.ghcr-image-name.outputs.result }}:${{
-          needs.pr-number.outputs.result }} || EXIT_CODE=$?
+          needs.pr-number.outputs.result }} && EXIT_CODE=0 || EXIT_CODE=$?
 
           RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
 
