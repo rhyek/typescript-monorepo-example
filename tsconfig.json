@@ -3,7 +3,7 @@
     "strict": true,
     "module": "commonjs",
     "target": "es2019",
-    "lib": ["es2019"],
+    "lib": ["ES2019.Array", "ES2020.String"],
     "composite": true,
     "incremental": true,
     "sourceMap": true,
