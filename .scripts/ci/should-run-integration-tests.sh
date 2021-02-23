@@ -11,12 +11,11 @@ if [ ! -z "$DEPS" ]; then # if not empty
   IFS=',' read -ra ARR <<< "$DEPS"
   for DEP in "${ARR[@]}"; do
     IMAGE="ghcr.io/$GITHUB_REPOSITORY-$GITHUB_BASE_REF_SLUG-$DEP"
-    EXIT_CODE=0
-    docker manifest inspect $IMAGE:$GITHUB_SHA || EXIT_CODE=$?
+    docker manifest inspect $IMAGE:$PR_NUMBER && EXIT_CODE=0 || EXIT_CODE=$?
     if [ $EXIT_CODE = 0 ]; then
       DEP_CHANGED=true
       ANY_DEP_CHANGED=true
-      TAG=$GITHUB_SHA
+      TAG=$PR_NUMBER
     else
       DEP_CHANGED=false
       TAG=latest
