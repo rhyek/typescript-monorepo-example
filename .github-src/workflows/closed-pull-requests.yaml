@@ -38,7 +38,7 @@ jobs:
             -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions" \
-            | jq '.[] | select(.metadata.container.tags[0] == "18").id' 2> /dev/null \
+            | jq '.[] | select(.metadata.container.tags[0] == "${{ github.event.pull_request.number }}").id' 2> /dev/null \
             || echo null
           )
           if [ "$IMAGE_ID" != 'null' ]; then
