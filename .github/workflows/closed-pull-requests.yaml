@@ -6,12 +6,37 @@ name: Closed PRs
     types:
       - closed
 jobs:
-  debug-github-context:
-    name: lmao
+  delete-unused-images:
+    name: Delete unused image tags
     runs-on: ubuntu-20.04
+    if: github.event.pull_request.merged == false
+    strategy:
+      matrix:
+        name:
+          - web-api
+          - internal-api
     steps:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
-      - env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
+      - name: Docker login
+        run: >-
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
+          --password-stdin
+      - name: Set image name
+        id: image-name
+        run: >-
+          echo "::set-output name=result::ghcr.io/${{ github.repository }}-${{
+          env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}"
+      - name: New image exists?
+        id: check-exists
+        run: >
+          docker manifest inspect ${{ steps.image-name.outputs.result }}:${{
+          github.event.pull_request.number }} && EXIT_CODE=0 || EXIT_CODE=$?
+
+          RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
+
+          echo "::set-output name=result::$RESULT"
+      - name: Delete image
+        if: ${{ steps.check-exists.outputs.result == 'true' }}
+        run: |
+          echo 'delete'
