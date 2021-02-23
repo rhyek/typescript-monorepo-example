@@ -8,12 +8,12 @@ env:
   WEB_API_APP: typescript-monorepo
 jobs:
   pr-number:
-    name: PR SHA
+    name: Get PR number
     runs-on: ubuntu-20.04
     outputs:
       result: ${{ steps.pr-number.outputs.result }}
     steps:
-      - name: Get PR SHA
+      - name: Get PR number
         id: pr-number
         run: |
           SHA=$(curl \
@@ -52,7 +52,8 @@ jobs:
         run: >-
           echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
           --password-stdin
-      - id: image-pulled
+      - name: Check if image for PR exists
+        id: image-exists
         run: >
           docker pull ${{ steps.ghcr-image-name.outputs.result }}:${{
           needs.pr-number.outputs.result }} && EXIT_CODE=0 || EXIT_CODE=$?
@@ -61,7 +62,7 @@ jobs:
 
           echo "::set-output name=result::$RESULT"
       - name: Tag and push to heroku
-        if: steps.image-pulled.outputs.result == 'true'
+        if: steps.image-exists.outputs.result == 'true'
         run: >
           docker login --username=_ --password=${{ env.HEROKU_API_KEY }}
           registry.heroku.com
@@ -72,7 +73,7 @@ jobs:
 
           docker push ${{ steps.heroku-image-name.outputs.result }}
       - name: Tag latest and push to ghcr
-        if: steps.image-pulled.outputs.result == 'true'
+        if: steps.image-exists.outputs.result == 'true'
         run: >
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{
           needs.pr-number.outputs.result }} ${{

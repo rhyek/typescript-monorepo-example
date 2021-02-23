@@ -9,7 +9,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "ts-node -T .scripts/pre-commit && ./.github-src/build.sh"
+      "pre-commit": ".scripts/pre-commit.ts && ./.github-src/build.sh"
     }
   },
   "devDependencies": {
