@@ -10,13 +10,6 @@ env:
   WEB_API_APP: typescript-monorepo
 
 anchors:
-  # setup: &setup
-  #   - uses: actions/checkout@v2
-  #   - uses: actions/setup-node@v2
-  #     with:
-  #       node-version: '14.15.4'
-  #   - run: curl -s https://cli-assets.heroku.com/install.sh | sh
-  #   - run: heroku container:login
   report: &report
     name: Slack Notification
     uses: rtCamp/action-slack-notify@v2
@@ -28,6 +21,19 @@ anchors:
   docker-login: &docker-login
     name: Docker login
     run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
+  setup-pnpm: &setup-pnpm
+    - name: Cache pnpm store
+      uses: actions/cache@v2
+      with:
+        path: ~/.pnpm-store
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v1.2.1
+      with:
+        version: 5.17.2
+    - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
 
 jobs:
   pr-number:
@@ -48,8 +54,8 @@ jobs:
             || echo null
           )
           echo "::set-output name=result::$SHA"
-  publish:
-    name: Publish images
+  publish-for-pr:
+    name: Publish images for merged PR
     runs-on: ubuntu-20.04
     needs: pr-number
     if: needs.pr-number.outputs.result != 'null'
@@ -85,10 +91,54 @@ jobs:
         run: |
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} ${{ steps.ghcr-image-name.outputs.result }}:latest
           docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
+      - <<: *report
+  publish-for-push:
+    name: Publish images for direct push
+    runs-on: ubuntu-20.04
+    needs: pr-number
+    if: needs.pr-number.outputs.result == 'null'
+    strategy:
+      matrix:
+        include:
+          - name: web-api
+            heroku_app_key: WEB_API_APP
+            package-name: '@my/web-api'
+            path: apps/web-api
+    steps:
+      - uses: actions/checkout@v2
+      - *setup-pnpm
+      - run: pnpm i --frozen-lockfile
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
+      - <<: *docker-login
+      - name: Set GHCR.io image name
+        id: ghcr-image-name
+        run: echo "::set-output name=result::ghcr.io/${{ github.repository }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}"
+      - name: Set Heroku image name
+        id: heroku-image-name
+        run: echo "::set-output name=result::registry.heroku.com/${{ env[matrix.heroku_app_key] }}/web"
+      - name: Build docker image
+        run: |
+          .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
+          docker build \
+            -t ${{ steps.ghcr-image-name.outputs.result }}:latest \
+            -t ${{ steps.heroku-image-name.outputs.result }} \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --cache-from=${{ steps.ghcr-image-name.outputs.result }}:latest \
+            -f ${{ matrix.path }}/Dockerfile \
+            .
+      - name: Push to heroku
+        run: |
+          docker login --username=_ --password=${{ env.HEROKU_API_KEY }} registry.heroku.com
+          docker push ${{ steps.heroku-image-name.outputs.result }}
+      - name: Push to ghcr
+        run: |
+          docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
+      - <<: *report
   deploy:
     name: Deploy apps
     runs-on: ubuntu-20.04
-    needs: publish
+    needs: [publish-for-pr, publish-for-push]
     steps:
       - uses: actions/setup-node@v2
         with:
@@ -96,6 +146,8 @@ jobs:
       - run: curl -s https://cli-assets.heroku.com/install.sh | sh
       - run: heroku container:login
       - run: heroku container:release web --app=$WEB_API_APP
+      - <<: *report
+        if: ${{ always() }}
 # jobs:
 #   publish-apps:
 #     name: Publish apps

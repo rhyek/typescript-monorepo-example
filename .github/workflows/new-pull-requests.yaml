@@ -11,18 +11,13 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
       - name: Cache pnpm store
         uses: actions/cache@v2
         with:
           path: ~/.pnpm-store
-          key: >-
-            ${{ runner.os }}-tests-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml')
-            }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-tests-pnpm-store-
+            ${{ runner.os }}-pnpm-store-
       - name: Setup pnpm
         uses: pnpm/action-setup@v1.2.1
         with:
@@ -33,11 +28,11 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
+      - run: pnpm i --frozen-lockfile
       - name: Fetch target branch
         run: >-
           git fetch --no-tags --prune --depth=1 origin +refs/heads/${{
           github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
-      - run: pnpm i --frozen-lockfile
       - run: .scripts/ci/run-lint.ts
       - run: .scripts/ci/run-tests.ts unit
   build:
@@ -60,11 +55,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.pnpm-store
-          key: >-
-            ${{ runner.os }}-tests-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml')
-            }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-tests-pnpm-store-
+            ${{ runner.os }}-pnpm-store-
       - name: Setup pnpm
         uses: pnpm/action-setup@v1.2.1
         with:
@@ -135,11 +128,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.pnpm-store
-          key: >-
-            ${{ runner.os }}-tests-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml')
-            }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-tests-pnpm-store-
+            ${{ runner.os }}-pnpm-store-
       - name: Setup pnpm
         uses: pnpm/action-setup@v1.2.1
         with:
