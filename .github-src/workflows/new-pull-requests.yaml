@@ -14,9 +14,9 @@ anchors:
       uses: actions/cache@v2
       with:
         path: ~/.pnpm-store
-        key: ${{ runner.os }}-tests-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
         restore-keys: |
-          ${{ runner.os }}-tests-pnpm-store-
+          ${{ runner.os }}-pnpm-store-
     - name: Setup pnpm
       uses: pnpm/action-setup@v1.2.1
       with:
@@ -41,13 +41,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
       - *setup-pnpm
       - <<: *node-modules-cache
-      - <<: *fetch-target-branch
       - run: pnpm i --frozen-lockfile
+      - <<: *fetch-target-branch
       - run: .scripts/ci/run-lint.ts
       - run: .scripts/ci/run-tests.ts unit
   build:
