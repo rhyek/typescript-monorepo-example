@@ -14,7 +14,7 @@ anchors:
   report: &report
     name: Slack Notification
     uses: rtCamp/action-slack-notify@v2
-    if: ${{ cancelled() || failure() }}
+    if: cancelled() || failure()
     env:
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       SLACK_USERNAME: github-actions
@@ -46,7 +46,7 @@ jobs:
       - name: Get PR number
         id: pr-number
         run: |
-          SHA=$(curl \
+          NUMBER=$(curl \
             -s \
             -H 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
             -H 'accept: application/vnd.github.groot-preview+json' \
@@ -54,7 +54,7 @@ jobs:
             | jq -rM '.[0].number' 2> /dev/null \
             || echo null
           )
-          echo "::set-output name=result::$SHA"
+          echo "::set-output name=result::$NUMBER"
   publish-for-pr:
     name: Publish images for merged PR
     runs-on: ubuntu-20.04
@@ -140,6 +140,7 @@ jobs:
     name: Deploy apps
     runs-on: ubuntu-20.04
     needs: [publish-for-pr, publish-for-push]
+    if: always() && (needs.publish-for-pr.result == 'success' || needs.publish-for-push.result == 'success')
     steps:
       - uses: actions/setup-node@v2
         with:
@@ -148,7 +149,7 @@ jobs:
       - run: heroku container:login
       - run: heroku container:release web --app=$WEB_API_APP
       - <<: *report
-        if: ${{ always() }}
+        if: always()
 # jobs:
 #   publish-apps:
 #     name: Publish apps
