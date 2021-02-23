@@ -5,19 +5,36 @@ on:
     branches:
       - main
 
+env:
+  HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+  WEB_API_APP: typescript-monorepo
+
+anchors:
+  # setup: &setup
+  #   - uses: actions/checkout@v2
+  #   - uses: actions/setup-node@v2
+  #     with:
+  #       node-version: '14.15.4'
+  #   - run: curl -s https://cli-assets.heroku.com/install.sh | sh
+  #   - run: heroku container:login
+  report: &report
+    name: Slack Notification
+    uses: rtCamp/action-slack-notify@v2
+    if: ${{ cancelled() || failure() }}
+    env:
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      SLACK_USERNAME: github-actions
+      SLACK_COLOR: ${{ job.status == 'success' && 'good' || job.status == 'cancelled' && '#808080' || 'danger' }}
+  docker-login: &docker-login
+    name: Docker login
+    run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
+
 jobs:
-  # debug-github-context:
-  #   name: lmao
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - name: Inject slug/short variables
-  #       uses: rlespinasse/github-slug-action@v3.x
-  #     - env:
-  #         GITHUB_CONTEXT: ${{ toJSON(github) }}
-  #       run: echo "$GITHUB_CONTEXT"
   pr-sha:
     name: PR SHA
     runs-on: ubuntu-20.04
+    outputs:
+      result: ${{ steps.pr-sha.outputs.result }}
     steps:
       - name: Get PR SHA
         id: pr-sha
@@ -31,33 +48,52 @@ jobs:
             || echo null
           )
           echo "::set-output name=result::$SHA"
-      - name: Is PR
-        if: steps.pr-sha.outputs.result != 'null'
-        run: echo 'is a pr with sha ${{ steps.pr-sha.outputs.result }}'
-      - name: Is not a PR
-        if: steps.pr-sha.outputs.result == 'null'
-        run: echo 'is not a PR'
-# env:
-#   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-#   WEB_API_APP: typescript-monorepo
-
-# anchors:
-#   setup: &setup
-#     - uses: actions/checkout@v2
-#     - uses: actions/setup-node@v2
-#       with:
-#         node-version: '14.15.4'
-#     - run: curl -s https://cli-assets.heroku.com/install.sh | sh
-#     - run: heroku container:login
-#   report: &report
-#     name: Slack Notification
-#     uses: rtCamp/action-slack-notify@v2
-#     if: ${{ cancelled() || failure() }}
-#     env:
-#       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-#       SLACK_USERNAME: github-actions
-#       SLACK_COLOR: ${{ job.status == 'success' && 'good' || job.status == 'cancelled' && '#808080' || 'danger' }}
-
+  publish:
+    name: Publish images
+    runs-on: ubuntu-20.04
+    needs: pr-sha
+    if: steps.pr-sha.outputs.result != 'null'
+    strategy:
+      matrix:
+        include:
+          - name: web-api
+            heroku_app_key: WEB_API_APP
+    steps:
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
+      - name: Set GHCR.io image name
+        id: ghcr-image-name
+        run: echo "::set-output name=result::ghcr.io/${{ github.repository }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}"
+      - name: Set Heroku image name
+        id: heroku-image-name
+        run: echo "::set-output name=result::registry.heroku.com/${{ env[matrix.heroku_app_key] }}/web"
+      - <<: *docker-login
+      - id: image-pulled
+        run: |
+          EXIT_CODE=0
+          docker pull ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-sha.outputs.result }} || EXIT_CODE=$?
+          RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
+          echo "::set-output name=result::$RESULT"
+      - name: Tag and push to heroku
+        if: steps.image-pulled.outputs.result == 'true'
+        run: |
+          docker login --username=_ --password=${{ env.HEROKU_API_KEY }} registry.heroku.com
+          docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-sha.outputs.result }} ${{ steps.heroku-image-name.outputs.result }}
+          docker push ${{ steps.heroku-image-name.outputs.result }}
+      - name: Tag latest and push to ghcr
+          docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-sha.outputs.result }} ${{ steps.ghcr-image-name.outputs.result }}:latest
+          docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
+  deploy:
+    name: Deploy apps
+    runs-on: ubuntu-20.04
+    needs: publish
+    steps:
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.15.4'
+      - run: curl -s https://cli-assets.heroku.com/install.sh | sh
+      - run: heroku container:login
+      - run: heroku container:release web --app=$WEB_API_APP
 # jobs:
 #   publish-apps:
 #     name: Publish apps
@@ -86,3 +122,10 @@ jobs:
 #       # - run: heroku container:release web --app=error
 #       - <<: *report
 #         if: ${{ always() }}
+
+## delete
+# curl -i \
+#   -X DELETE \
+#   -H 'Authorization: Bearer xxx' \
+#   -H "Accept: application/vnd.github.v3+json" \
+#   https://api.github.com/user/packages/container/typescript-monorepo-example-main-web-api/versions/d55cadceb684e66e95187bdccd962863033aee1e

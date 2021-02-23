@@ -6,8 +6,171 @@ name: Tests
 env:
   DOCKER_BUILDKIT: 1
 jobs:
-  print-usable-sha:
-    name: Rofl!
+  lint-unit-tests:
+    name: Lint and Unit Tests
     runs-on: ubuntu-20.04
     steps:
-      - run: echo ${{ github.event.pull_request.head.sha }}
+      - uses: actions/checkout@v2
+      - env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - name: Cache pnpm store
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: >-
+            ${{ runner.os }}-tests-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml')
+            }}
+          restore-keys: |
+            ${{ runner.os }}-tests-pnpm-store-
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v1.2.1
+        with:
+          version: 5.17.2
+      - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
+      - name: Fetch target branch
+        run: >-
+          git fetch --no-tags --prune --depth=1 origin +refs/heads/${{
+          github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+      - run: pnpm i --frozen-lockfile
+      - run: .scripts/ci/run-lint.ts
+      - run: .scripts/ci/run-tests.ts unit
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+    needs:
+      - lint-unit-tests
+    strategy:
+      matrix:
+        include:
+          - name: web-api
+            package-name: '@my/web-api'
+            path: apps/web-api
+          - name: internal-api
+            package-name: '@my/internal-api'
+            path: apps/internal-api
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache pnpm store
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: >-
+            ${{ runner.os }}-tests-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml')
+            }}
+          restore-keys: |
+            ${{ runner.os }}-tests-pnpm-store-
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v1.2.1
+        with:
+          version: 5.17.2
+      - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
+      - name: Fetch target branch
+        run: >-
+          git fetch --no-tags --prune --depth=1 origin +refs/heads/${{
+          github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
+      - name: Docker login
+        run: >-
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
+          --password-stdin
+      - name: Set image name
+        run: >-
+          echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG
+          }}-${{ matrix.name }}" >> $GITHUB_ENV
+      - name: Should build docker image?
+        id: needs-build
+        run: |
+          NEEDS_BUILD=$(.scripts/ci/needs-build.ts ${{ matrix.package-name }})
+          if [ "$NEEDS_BUILD" == "false" ]; then
+            EXIT_CODE=0
+            docker manifest inspect ${{ env.IMAGE }}:latest || EXIT_CODE=$?
+            if [ $EXIT_CODE != 0 ]; then
+              NEEDS_BUILD="true"
+            fi
+          fi
+          echo "::set-output name=result::$NEEDS_BUILD"
+      - name: Build docker image
+        if: steps.needs-build.outputs.result == 'true'
+        run: >
+          .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }}
+          --replace
+
+          docker build \
+            -t ${{ env.IMAGE }}:${{ github.event.pull_request.head.sha }} \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --cache-from=${{ env.IMAGE }}:latest \
+            -f ${{ matrix.path }}/Dockerfile \
+            .
+          docker push ${{ env.IMAGE }}:${{ github.event.pull_request.head.sha }}
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-20.04
+    needs:
+      - build
+    strategy:
+      matrix:
+        include:
+          - name: web-api
+            package-name: '@my/web-api'
+            path: apps/web-api
+            deps: internal-api
+          - name: internal-api
+            package-name: '@my/internal-api'
+            path: apps/internal-api
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache pnpm store
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: >-
+            ${{ runner.os }}-tests-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml')
+            }}
+          restore-keys: |
+            ${{ runner.os }}-tests-pnpm-store-
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v1.2.1
+        with:
+          version: 5.17.2
+      - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
+      - name: Fetch target branch
+        run: >-
+          git fetch --no-tags --prune --depth=1 origin +refs/heads/${{
+          github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v3.x
+      - name: Docker login
+        run: >-
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
+          --password-stdin
+      - name: Should run tests?
+        id: should-run
+        env:
+          SUT_PACKAGE_NAME: ${{ matrix.package-name }}
+          SUT_PATH: ${{ matrix.path }}
+          DEPS: ${{ matrix.deps }}
+        run: |
+          EXIT_CODE=0
+          .scripts/ci/should-run-integration-tests.sh || EXIT_CODE=$?
+          SHOULD_RUN=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
+          echo "::set-output name=result::$SHOULD_RUN"
+      - name: Run integration tests
+        if: steps.should-run.outputs.result == 'true'
+        run: pnpm test:e2e --filter '${{ matrix.package-name }}'
