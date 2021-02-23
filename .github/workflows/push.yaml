@@ -21,7 +21,7 @@ jobs:
             -s \
             -H 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
             -H 'accept: application/vnd.github.groot-preview+json' \
-            GET 'https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/pulls' \
+            'https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/pulls' \
             | jq -rM '.[0].number' 2> /dev/null \
             || echo null
           )
@@ -81,6 +81,27 @@ jobs:
           steps.ghcr-image-name.outputs.result }}:latest
 
           docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
+      - name: Delete PR image
+        if: steps.image-exists.outputs.result == 'true'
+        run: >
+          PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{
+          env.GITHUB_REF_SLUG }}-${{ matrix.name }}
+
+          IMAGE_ID=$(curl -s \
+            -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions" \
+            | jq '.[] | select(.metadata.container.tags[0] == "${{ needs.pr-number.outputs.result }}").id' 2> /dev/null \
+            || echo null
+          )
+
+          if [ "$IMAGE_ID" != 'null' ]; then
+            curl -i \
+              -X DELETE \
+              -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions/$IMAGE_ID"
+          fi
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         if: cancelled() || failure()

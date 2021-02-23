@@ -1,0 +1,16 @@
+docker-login: &docker-login
+  name: Docker login
+  run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
+setup-pnpm: &setup-pnpm
+  - name: Cache pnpm store
+    uses: actions/cache@v2
+    with:
+      path: ~/.pnpm-store
+      key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+      restore-keys: |
+        ${{ runner.os }}-pnpm-store-
+  - name: Setup pnpm
+    uses: pnpm/action-setup@v1.2.1
+    with:
+      version: 5.17.2
+  - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH

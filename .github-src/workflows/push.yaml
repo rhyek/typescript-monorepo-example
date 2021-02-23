@@ -11,6 +11,7 @@ env:
   WEB_API_APP: typescript-monorepo
 
 anchors:
+  !include(../includes/common-anchors.yaml)
   report: &report
     name: Slack Notification
     uses: rtCamp/action-slack-notify@v2
@@ -19,22 +20,6 @@ anchors:
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       SLACK_USERNAME: github-actions
       SLACK_COLOR: ${{ job.status == 'success' && 'good' || job.status == 'cancelled' && '#808080' || 'danger' }}
-  docker-login: &docker-login
-    name: Docker login
-    run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
-  setup-pnpm: &setup-pnpm
-    - name: Cache pnpm store
-      uses: actions/cache@v2
-      with:
-        path: ~/.pnpm-store
-        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-pnpm-store-
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v1.2.1
-      with:
-        version: 5.17.2
-    - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
 
 jobs:
   pr-number:
@@ -50,7 +35,7 @@ jobs:
             -s \
             -H 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
             -H 'accept: application/vnd.github.groot-preview+json' \
-            GET 'https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/pulls' \
+            'https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/pulls' \
             | jq -rM '.[0].number' 2> /dev/null \
             || echo null
           )
@@ -92,6 +77,24 @@ jobs:
         run: |
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} ${{ steps.ghcr-image-name.outputs.result }}:latest
           docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
+      - name: Delete PR image
+        if: steps.image-exists.outputs.result == 'true'
+        run: |
+          PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}
+          IMAGE_ID=$(curl -s \
+            -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions" \
+            | jq '.[] | select(.metadata.container.tags[0] == "${{ needs.pr-number.outputs.result }}").id' 2> /dev/null \
+            || echo null
+          )
+          if [ "$IMAGE_ID" != 'null' ]; then
+            curl -i \
+              -X DELETE \
+              -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions/$IMAGE_ID"
+          fi
       - <<: *report
   publish-for-push:
     name: Publish images for direct push
@@ -150,39 +153,12 @@ jobs:
       - run: heroku container:release web --app=$WEB_API_APP
       - <<: *report
         if: always()
-# jobs:
-#   publish-apps:
-#     name: Publish apps
-#     runs-on: ubuntu-20.04
-#     strategy:
-#       matrix:
-#         include:
-#           - path: src/web-api
-#             heroku_app_key: WEB_API_APP
-#     defaults:
-#       run:
-#         working-directory: ${{ matrix.path }}
-#     steps:
-#       - *setup
-#       - run: heroku container:push --app=${{ env[matrix.heroku_app_key] }} --context-path=../../ web
-#       # - run: heroku container:push --app=error --context-path=../../ web
-#       - <<: *report
+# ## delete old image tag
 
-#   deploy-apps:
-#     name: Deploy apps
-#     runs-on: ubuntu-20.04
-#     needs: [publish-apps]
-#     steps:
-#       - *setup
-#       - run: heroku container:release web --app=$WEB_API_APP
-#       # - run: heroku container:release web --app=error
-#       - <<: *report
-#         if: ${{ always() }}
+# # does not currently work: https://github.community/t/deleting-a-package-version-for-a-container-on-ghcr-io-results-in-a-500-error/163549
 
-## delete
-
-# curl -i \
-#   -X DELETE \
-#   -H 'Authorization: Bearer xxx' \
-#   -H "Accept: application/vnd.github.v3+json" \
-#   https://api.github.com/user/packages/container/typescript-monorepo-example-main-web-api/versions/d55cadceb684e66e95187bdccd962863033aee1e
+# # curl -i \
+# #   -X DELETE \
+# #   -H 'Authorization: Bearer xxx' \
+# #   -H "Accept: application/vnd.github.v3+json" \
+# #   https://api.github.com/user/packages/container/typescript-monorepo-example-main-web-api/versions/15
