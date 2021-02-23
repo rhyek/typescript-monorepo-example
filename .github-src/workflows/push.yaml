@@ -31,12 +31,12 @@ anchors:
 
 jobs:
   pr-number:
-    name: PR SHA
+    name: Get PR number
     runs-on: ubuntu-20.04
     outputs:
       result: ${{ steps.pr-number.outputs.result }}
     steps:
-      - name: Get PR SHA
+      - name: Get PR number
         id: pr-number
         run: |
           SHA=$(curl \
@@ -68,19 +68,20 @@ jobs:
         id: heroku-image-name
         run: echo "::set-output name=result::registry.heroku.com/${{ env[matrix.heroku_app_key] }}/web"
       - <<: *docker-login
-      - id: image-pulled
+      - name: Check if image for PR exists
+        id: image-exists
         run: |
           docker pull ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} && EXIT_CODE=0 || EXIT_CODE=$?
           RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
           echo "::set-output name=result::$RESULT"
       - name: Tag and push to heroku
-        if: steps.image-pulled.outputs.result == 'true'
+        if: steps.image-exists.outputs.result == 'true'
         run: |
           docker login --username=_ --password=${{ env.HEROKU_API_KEY }} registry.heroku.com
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} ${{ steps.heroku-image-name.outputs.result }}
           docker push ${{ steps.heroku-image-name.outputs.result }}
       - name: Tag latest and push to ghcr
-        if: steps.image-pulled.outputs.result == 'true'
+        if: steps.image-exists.outputs.result == 'true'
         run: |
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} ${{ steps.ghcr-image-name.outputs.result }}:latest
           docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
