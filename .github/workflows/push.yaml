@@ -4,6 +4,7 @@ name: Publish and Deploy
     branches:
       - main
 env:
+  DOCKER_BUILDKIT: 1
   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
   WEB_API_APP: typescript-monorepo
 jobs:
