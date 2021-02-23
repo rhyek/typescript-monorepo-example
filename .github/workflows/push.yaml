@@ -7,29 +7,29 @@ env:
   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
   WEB_API_APP: typescript-monorepo
 jobs:
-  pr-sha:
+  pr-number:
     name: PR SHA
     runs-on: ubuntu-20.04
     outputs:
-      result: ${{ steps.pr-sha.outputs.result }}
+      result: ${{ steps.pr-number.outputs.result }}
     steps:
       - name: Get PR SHA
-        id: pr-sha
+        id: pr-number
         run: |
           SHA=$(curl \
             -s \
             -H 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
             -H 'accept: application/vnd.github.groot-preview+json' \
             GET 'https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/pulls' \
-            | jq -rM '.[0].head.sha' 2> /dev/null \
+            | jq -rM '.[0].number' 2> /dev/null \
             || echo null
           )
           echo "::set-output name=result::$SHA"
   publish:
     name: Publish images
     runs-on: ubuntu-20.04
-    needs: pr-sha
-    if: steps.pr-sha.outputs.result != 'null'
+    needs: pr-number
+    if: steps.pr-number.outputs.result != 'null'
     strategy:
       matrix:
         include:
@@ -57,7 +57,7 @@ jobs:
           EXIT_CODE=0
 
           docker pull ${{ steps.ghcr-image-name.outputs.result }}:${{
-          needs.pr-sha.outputs.result }} || EXIT_CODE=$?
+          needs.pr-number.outputs.result }} || EXIT_CODE=$?
 
           RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
 
@@ -69,7 +69,7 @@ jobs:
           registry.heroku.com
 
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{
-          needs.pr-sha.outputs.result }} ${{
+          needs.pr-number.outputs.result }} ${{
           steps.heroku-image-name.outputs.result }}
 
           docker push ${{ steps.heroku-image-name.outputs.result }}
@@ -77,7 +77,7 @@ jobs:
         if: steps.image-pulled.outputs.result == 'true'
         run: >
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{
-          needs.pr-sha.outputs.result }} ${{
+          needs.pr-number.outputs.result }} ${{
           steps.ghcr-image-name.outputs.result }}:latest
 
           docker push ${{ steps.ghcr-image-name.outputs.result }}:latest

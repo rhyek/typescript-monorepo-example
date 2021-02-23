@@ -33,7 +33,7 @@ jobs:
           EXIT_CODE=0
 
           docker manifest inspect ${{ steps.image-name.outputs.result }}:${{
-          github.event.pull_request.head.sha }} || EXIT_CODE=$?
+          github.event.pull_request.number }} || EXIT_CODE=$?
 
           RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
 

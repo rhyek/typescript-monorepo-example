@@ -30,29 +30,29 @@ anchors:
     run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
 
 jobs:
-  pr-sha:
+  pr-number:
     name: PR SHA
     runs-on: ubuntu-20.04
     outputs:
-      result: ${{ steps.pr-sha.outputs.result }}
+      result: ${{ steps.pr-number.outputs.result }}
     steps:
       - name: Get PR SHA
-        id: pr-sha
+        id: pr-number
         run: |
           SHA=$(curl \
             -s \
             -H 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
             -H 'accept: application/vnd.github.groot-preview+json' \
             GET 'https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/pulls' \
-            | jq -rM '.[0].head.sha' 2> /dev/null \
+            | jq -rM '.[0].number' 2> /dev/null \
             || echo null
           )
           echo "::set-output name=result::$SHA"
   publish:
     name: Publish images
     runs-on: ubuntu-20.04
-    needs: pr-sha
-    if: steps.pr-sha.outputs.result != 'null'
+    needs: pr-number
+    if: steps.pr-number.outputs.result != 'null'
     strategy:
       matrix:
         include:
@@ -71,19 +71,19 @@ jobs:
       - id: image-pulled
         run: |
           EXIT_CODE=0
-          docker pull ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-sha.outputs.result }} || EXIT_CODE=$?
+          docker pull ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} || EXIT_CODE=$?
           RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
           echo "::set-output name=result::$RESULT"
       - name: Tag and push to heroku
         if: steps.image-pulled.outputs.result == 'true'
         run: |
           docker login --username=_ --password=${{ env.HEROKU_API_KEY }} registry.heroku.com
-          docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-sha.outputs.result }} ${{ steps.heroku-image-name.outputs.result }}
+          docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} ${{ steps.heroku-image-name.outputs.result }}
           docker push ${{ steps.heroku-image-name.outputs.result }}
       - name: Tag latest and push to ghcr
         if: steps.image-pulled.outputs.result == 'true'
         run: |
-          docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-sha.outputs.result }} ${{ steps.ghcr-image-name.outputs.result }}:latest
+          docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} ${{ steps.ghcr-image-name.outputs.result }}:latest
           docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
   deploy:
     name: Deploy apps

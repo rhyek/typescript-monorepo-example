@@ -90,12 +90,13 @@ jobs:
         run: |
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
           docker build \
-            -t ${{ env.IMAGE }}:${{ github.event.pull_request.head.sha }} \
+            -t ${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --cache-from=${{ env.IMAGE }}:latest \
+            --cache-from=${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
             -f ${{ matrix.path }}/Dockerfile \
             .
-          docker push ${{ env.IMAGE }}:${{ github.event.pull_request.head.sha }}
+          docker push ${{ env.IMAGE }}:${{ github.event.pull_request.number }}
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-20.04
