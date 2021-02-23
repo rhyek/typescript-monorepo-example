@@ -124,6 +124,7 @@ jobs:
           SUT_PACKAGE_NAME: ${{ matrix.package-name }}
           SUT_PATH: ${{ matrix.path }}
           DEPS: ${{ matrix.deps }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           .scripts/ci/should-run-integration-tests.sh && EXIT_CODE=0 || EXIT_CODE=$?
           SHOULD_RUN=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
