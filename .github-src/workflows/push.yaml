@@ -81,6 +81,8 @@ jobs:
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-sha.outputs.result }} ${{ steps.heroku-image-name.outputs.result }}
           docker push ${{ steps.heroku-image-name.outputs.result }}
       - name: Tag latest and push to ghcr
+        if: steps.image-pulled.outputs.result == 'true'
+        run: |
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-sha.outputs.result }} ${{ steps.ghcr-image-name.outputs.result }}:latest
           docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
   deploy:

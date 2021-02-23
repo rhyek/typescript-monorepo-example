@@ -1,7 +1,5 @@
-SHA=$(curl -s \
-  -H 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
-  -H 'accept: application/vnd.github.groot-preview+json' \
-  GET 'https://api.github.com/repos/rhyek/typescript-monorepo-example/commits/cae5994460e5d53ee36a2a63c9319a0ebf1039cd/pulls' \
-  | jq -rM '.[0].head.sha' 2> /dev/null \
-  || echo null
-)
+curl -i \
+  -X DELETE \
+  -H 'Authorization: Bearer xxx' \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/user/packages/container/typescript-monorepo-example-main-web-api/versions/d55cadceb684e66e95187bdccd962863033aee1e
