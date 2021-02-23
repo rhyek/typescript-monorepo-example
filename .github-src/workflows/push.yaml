@@ -128,13 +128,13 @@ jobs:
             --cache-from=${{ steps.ghcr-image-name.outputs.result }}:latest \
             -f ${{ matrix.path }}/Dockerfile \
             .
+      - name: Push to ghcr
+        run: |
+          docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
       - name: Push to heroku
         run: |
           docker login --username=_ --password=${{ env.HEROKU_API_KEY }} registry.heroku.com
           docker push ${{ steps.heroku-image-name.outputs.result }}
-      - name: Push to ghcr
-        run: |
-          docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
       - <<: *report
   deploy:
     name: Deploy apps
