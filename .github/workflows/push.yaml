@@ -142,8 +142,9 @@ jobs:
         uses: pnpm/action-setup@v1.2.1
         with:
           version: 5.17.2
+          run_install: |
+            - args: [--frozen-lockfile]
       - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
-      - run: pnpm i --frozen-lockfile
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login

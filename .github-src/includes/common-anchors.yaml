@@ -1,17 +1,26 @@
 docker-login: &docker-login
   name: Docker login
   run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
-pnpm-store-cache: &pnpm-store-cache
-  name: Cache pnpm store
-  uses: actions/cache@v2
-  with:
-    path: ~/.pnpm-store
-    key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-    restore-keys: |
-      ${{ runner.os }}-pnpm-store-
+# pnpm-store-cache: &pnpm-store-cache
+#   name: Cache pnpm store
+#   uses: actions/cache@v2
+#   with:
+#     path: ~/.pnpm-store
+#     key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+#     restore-keys: |
+#       ${{ runner.os }}-pnpm-store-
 setup-pnpm: &setup-pnpm
+  - name: Cache pnpm store
+    uses: actions/cache@v2
+    with:
+      path: ~/.pnpm-store
+      key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+      restore-keys: |
+        ${{ runner.os }}-pnpm-store-
   - name: Setup pnpm
     uses: pnpm/action-setup@v1.2.1
     with:
       version: 5.17.2
+      run_install: |
+        - args: [--frozen-lockfile]
   - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH

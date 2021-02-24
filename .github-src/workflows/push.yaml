@@ -112,9 +112,9 @@ jobs:
             path: apps/web-api
     steps:
       - uses: actions/checkout@v2
-      - <<: *pnpm-store-cache
+      # - <<: *pnpm-store-cache
       - *setup-pnpm
-      - run: pnpm i --frozen-lockfile
+      # - run: pnpm i --frozen-lockfile
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - <<: *docker-login

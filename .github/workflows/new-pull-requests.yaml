@@ -22,13 +22,9 @@ jobs:
         uses: pnpm/action-setup@v1.2.1
         with:
           version: 5.17.2
+          run_install: |
+            - args: [--frozen-lockfile]
       - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
-      - name: Cache node_modules
-        uses: actions/cache@v2
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
-      - run: pnpm i --frozen-lockfile
       - name: Fetch target branch
         run: >-
           git fetch --no-tags --prune --depth=1 origin +refs/heads/${{
@@ -51,16 +47,20 @@ jobs:
             path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
+      - name: Cache pnpm store
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
       - name: Setup pnpm
         uses: pnpm/action-setup@v1.2.1
         with:
           version: 5.17.2
+          run_install: |
+            - args: [--frozen-lockfile]
       - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
-      - name: Cache node_modules
-        uses: actions/cache@v2
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
       - name: Fetch target branch
         run: >-
           git fetch --no-tags --prune --depth=1 origin +refs/heads/${{
@@ -117,16 +117,20 @@ jobs:
             path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
+      - name: Cache pnpm store
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
       - name: Setup pnpm
         uses: pnpm/action-setup@v1.2.1
         with:
           version: 5.17.2
+          run_install: |
+            - args: [--frozen-lockfile]
       - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
-      - name: Cache node_modules
-        uses: actions/cache@v2
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
       - name: Fetch target branch
         run: >-
           git fetch --no-tags --prune --depth=1 origin +refs/heads/${{

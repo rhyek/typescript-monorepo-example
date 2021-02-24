@@ -26,10 +26,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - <<: *pnpm-store-cache
+      # - <<: *pnpm-store-cache
       - *setup-pnpm
-      - <<: *node-modules-cache
-      - run: pnpm i --frozen-lockfile
+      # - <<: *node-modules-cache
+      # - run: pnpm i --frozen-lockfile
       - <<: *fetch-target-branch
       - run: .scripts/ci/run-lint.ts
       - run: .scripts/ci/run-tests.ts unit
@@ -49,7 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - *setup-pnpm
-      - <<: *node-modules-cache
+      # - <<: *node-modules-cache
       - <<: *fetch-target-branch
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
@@ -96,7 +96,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - *setup-pnpm
-      - <<: *node-modules-cache
+      # - <<: *node-modules-cache
       - <<: *fetch-target-branch
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
