@@ -21,7 +21,7 @@ jobs:
         run: |
           PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}
           IMAGE_ID=$(curl -s \
-            -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+            -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
             -H 'Accept: application/vnd.github.v3+json' \
             "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions" \
             | jq '.[] | select(.metadata.container.tags | index("${{ github.event.pull_request.number }}")).id' \
@@ -30,7 +30,7 @@ jobs:
           if [ "$IMAGE_ID" != 'null' ]; then
             curl -i \
               -X DELETE \
-              -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+              -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions/$IMAGE_ID"
             echo "Image id $IMAGE_ID with tag ${{ github.event.pull_request.number }} deleted"

@@ -154,12 +154,3 @@ jobs:
       - run: heroku container:release web --app=$WEB_API_APP
       - <<: *report
         if: always()
-# ## delete old image tag
-
-# # does not currently work: https://github.community/t/deleting-a-package-version-for-a-container-on-ghcr-io-results-in-a-500-error/163549
-
-# # curl -i \
-# #   -X DELETE \
-# #   -H 'Authorization: Bearer xxx' \
-# #   -H "Accept: application/vnd.github.v3+json" \
-# #   https://api.github.com/user/packages/container/typescript-monorepo-example-main-web-api/versions/15
