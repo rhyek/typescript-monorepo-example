@@ -103,7 +103,7 @@ jobs:
             -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
             -H 'Accept: application/vnd.github.v3+json' \
             "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions" \
-            | jq -rM '.[] | select(.metadata.container.tags | index("latest")).id // null' \
+            | jq -rM 'first(.[] | select(.metadata.container.tags | index("latest"))).id // null' \
             || echo null
           )
 
