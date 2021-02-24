@@ -103,9 +103,11 @@ jobs:
             -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
             -H 'Accept: application/vnd.github.v3+json' \
             "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions" \
-            | jq '.[] | select(.metadata.container.tags | index("latest")).id' \
+            | jq -rM '.[] | select(.metadata.container.tags | index("latest")).id // null' \
             || echo null
           )
+
+          echo "OLD_LATEST_IMAGE_ID: $OLD_LATEST_IMAGE_ID"
 
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{
           needs.pr-number.outputs.result }} ${{
@@ -188,7 +190,9 @@ jobs:
 
           docker pull ${{ steps.ghcr-image-name.outputs.result }}:latest >
           /dev/null || true
-            # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
+
+          # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
+
           docker build \
             -t ${{ steps.ghcr-image-name.outputs.result }}:latest \
             -t ${{ steps.heroku-image-name.outputs.result }} \
