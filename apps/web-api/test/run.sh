@@ -11,6 +11,7 @@ WHICH=$([ "$CI" == "true" ] && echo 'ci' || echo 'dev')
 docker-compose -f docker-compose.yaml -f "docker-compose.$WHICH.yaml" up --build --detach
 sh -s -- "localhost:$INTERNAL_API_PORT" -t 30 -- echo "Internal API available at $INTERNAL_API_PORT." < <(curl -s https://raw.githubusercontent.com/eficode/wait-for/v1.2.0/wait-for)
 curl -i "localhost:$INTERNAL_API_PORT"
+docker-compose -f docker-compose.yaml -f "docker-compose.$WHICH.yaml" logs internal-api
 echo
 ttsc -b ../tsconfig.test.json
 
