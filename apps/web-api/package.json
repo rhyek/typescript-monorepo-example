@@ -11,7 +11,7 @@
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "test:unit": "ttsc -b tsconfig.test.json && jest",
-    "test:e2e": "cd test && ./run"
+    "test:e2e": "cd test && ./run.sh"
   },
   "dependencies": {
     "@my/lib": "workspace:^1.0.0",
