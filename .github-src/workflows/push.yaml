@@ -101,7 +101,7 @@ jobs:
 
           echo "::set-output name=package-name::$PACKAGE_NAME"
           echo "::set-output name=old-latest-image-id::$OLD_LATEST_IMAGE_ID"
-      - name: Delete PR image
+      - name: Delete old Latest image
         if: steps.image-exists.outputs.result == 'true' && steps.push-to-ghcr.outputs.old-latest-image-id != 'null'
         run: |
           curl -i \
