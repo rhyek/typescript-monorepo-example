@@ -73,28 +73,30 @@ jobs:
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} ${{ steps.heroku-image-name.outputs.result }}
           docker push ${{ steps.heroku-image-name.outputs.result }}
       - name: Tag latest and push to ghcr
-        if: steps.image-exists.outputs.result == 'true'
-        run: |
-          docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} ${{ steps.ghcr-image-name.outputs.result }}:latest
-          docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
-      - name: Delete PR image
+        id: push-to-ghcr
         if: steps.image-exists.outputs.result == 'true'
         run: |
           PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}
-          IMAGE_ID=$(curl -s \
-            -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-            -H "Accept: application/vnd.github.v3+json" \
+          OLD_LATEST_IMAGE_ID=$(curl -s \
+            -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
+            -H 'Accept: application/vnd.github.v3+json' \
             "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions" \
-            | jq '.[] | select(.metadata.container.tags[0] == "${{ needs.pr-number.outputs.result }}").id' 2> /dev/null \
+            | jq '.[] | select(.metadata.container.tags | index("latest")).id' \
             || echo null
           )
-          if [ "$IMAGE_ID" != 'null' ]; then
-            curl -i \
-              -X DELETE \
-              -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions/$IMAGE_ID"
-          fi
+          docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} ${{ steps.ghcr-image-name.outputs.result }}:latest
+          docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
+
+          echo "::set-output name=package-name::$PACKAGE_NAME"
+          echo "::set-output name=old-latest-image-id::$OLD_LATEST_IMAGE_ID"
+      - name: Delete PR image
+        if: steps.image-exists.outputs.result == 'true' && steps.push-to-ghcr.outputs.old-latest-image-id != 'null'
+        run: |
+          curl -i \
+            -X DELETE \
+            -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/user/packages/container/${{ steps.push-to-ghcr.outputs.package-name }}/versions/${{ steps.push-to-ghcr.outputs.old-latest-image-id }}
       - <<: *report
   publish-for-push:
     name: Publish images for direct push
@@ -110,6 +112,7 @@ jobs:
             path: apps/web-api
     steps:
       - uses: actions/checkout@v2
+      - <<: *pnpm-store-cache
       - *setup-pnpm
       - run: pnpm i --frozen-lockfile
       - name: Inject slug/short variables
@@ -153,12 +156,3 @@ jobs:
       - run: heroku container:release web --app=$WEB_API_APP
       - <<: *report
         if: always()
-# ## delete old image tag
-
-# # does not currently work: https://github.community/t/deleting-a-package-version-for-a-container-on-ghcr-io-results-in-a-500-error/163549
-
-# # curl -i \
-# #   -X DELETE \
-# #   -H 'Authorization: Bearer xxx' \
-# #   -H "Accept: application/vnd.github.v3+json" \
-# #   https://api.github.com/user/packages/container/typescript-monorepo-example-main-web-api/versions/15

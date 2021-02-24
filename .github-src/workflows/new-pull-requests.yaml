@@ -26,6 +26,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
+      - <<: *pnpm-store-cache
       - *setup-pnpm
       - <<: *node-modules-cache
       - run: pnpm i --frozen-lockfile

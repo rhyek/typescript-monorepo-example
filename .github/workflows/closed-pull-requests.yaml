@@ -1,4 +1,4 @@
-name: Closed PRs
+name: Delete images for closed PRs
 'on':
   pull_request:
     branches:
@@ -18,42 +18,26 @@ jobs:
     steps:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
-      - name: Docker login
-        run: >-
-          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
-          --password-stdin
-      - name: Set image name
-        id: image-name
-        run: >-
-          echo "::set-output name=result::ghcr.io/${{ github.repository }}-${{
-          env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}"
-      - name: New image exists?
-        id: image-exists
-        run: >
-          docker manifest inspect ${{ steps.image-name.outputs.result }}:${{
-          github.event.pull_request.number }} && EXIT_CODE=0 || EXIT_CODE=$?
-
-          RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
-
-          echo "::set-output name=result::$RESULT"
-      - name: Delete PR image
-        if: steps.image-exists.outputs.result == 'true'
+      - name: Delete PR image if exists
         run: >
           PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{
-          env.GITHUB_REF_SLUG }}-${{ matrix.name }}
+          env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}
 
           IMAGE_ID=$(curl -s \
-            -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-            -H "Accept: application/vnd.github.v3+json" \
+            -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
+            -H 'Accept: application/vnd.github.v3+json' \
             "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions" \
-            | jq '.[] | select(.metadata.container.tags[0] == "${{ github.event.pull_request.number }}").id' 2> /dev/null \
+            | jq '.[] | select(.metadata.container.tags | index("${{ github.event.pull_request.number }}")).id' \
             || echo null
           )
 
           if [ "$IMAGE_ID" != 'null' ]; then
             curl -i \
               -X DELETE \
-              -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+              -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions/$IMAGE_ID"
+            echo "Image id $IMAGE_ID with tag ${{ github.event.pull_request.number }} deleted"
+          else
+            echo "Image id not found"
           fi

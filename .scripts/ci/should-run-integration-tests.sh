@@ -11,7 +11,7 @@ if [ ! -z "$DEPS" ]; then # if not empty
   IFS=',' read -ra ARR <<< "$DEPS"
   for DEP in "${ARR[@]}"; do
     IMAGE="ghcr.io/$GITHUB_REPOSITORY-$GITHUB_BASE_REF_SLUG-$DEP"
-    docker manifest inspect $IMAGE:$PR_NUMBER && EXIT_CODE=0 || EXIT_CODE=$?
+    docker manifest inspect $IMAGE:$PR_NUMBER > /dev/null && EXIT_CODE=0 || EXIT_CODE=$?
     if [ $EXIT_CODE = 0 ]; then
       DEP_CHANGED=true
       ANY_DEP_CHANGED=true
