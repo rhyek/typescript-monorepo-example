@@ -4,4 +4,4 @@ services:
     environment:
       - PORT=3000
     ports:
-      - 4001:3000
+      - '$INTERNAL_API_PORT:3000'
