@@ -110,6 +110,7 @@ jobs:
             path: apps/web-api
     steps:
       - uses: actions/checkout@v2
+      - <<: *pnpm-store-cache
       - *setup-pnpm
       - run: pnpm i --frozen-lockfile
       - name: Inject slug/short variables

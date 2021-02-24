@@ -51,13 +51,6 @@ jobs:
             path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
-      - name: Cache pnpm store
-        uses: actions/cache@v2
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
       - name: Setup pnpm
         uses: pnpm/action-setup@v1.2.1
         with:
@@ -124,13 +117,6 @@ jobs:
             path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
-      - name: Cache pnpm store
-        uses: actions/cache@v2
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
       - name: Setup pnpm
         uses: pnpm/action-setup@v1.2.1
         with:
