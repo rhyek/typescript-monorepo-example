@@ -4,7 +4,6 @@ name: Publish and Deploy
     branches:
       - main
 env:
-  DOCKER_BUILDKIT: 1
   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
   WEB_API_APP: typescript-monorepo
 jobs:
@@ -26,6 +25,26 @@ jobs:
             || echo null
           )
           echo "::set-output name=result::$NUMBER"
+  pnpm-store-cache:
+    name: Create pnpm store cache for future PRs
+    runs-on: ubuntu-20.04
+    needs: pr-number
+    if: needs.pr-number.outputs.result != 'null'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache pnpm store
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpmstore-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpmstore-
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v1.2.1
+        with:
+          version: 5.17.2
+      - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
+      - run: pnpm i --frozen-lockfile
   publish-for-pr:
     name: Publish images for merged PR
     runs-on: ubuntu-20.04
@@ -135,9 +154,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpmstore-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-pnpmstore-
       - name: Setup pnpm
         uses: pnpm/action-setup@v1.2.1
         with:
@@ -165,10 +184,14 @@ jobs:
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }}
           --replace
 
+          # TODO: BUILDKIT: remove this pull
+
+          docker pull ${{ steps.ghcr-image-name.outputs.result }}:latest >
+          /dev/null || true
+            # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
           docker build \
             -t ${{ steps.ghcr-image-name.outputs.result }}:latest \
             -t ${{ steps.heroku-image-name.outputs.result }} \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
             --cache-from=${{ steps.ghcr-image-name.outputs.result }}:latest \
             -f ${{ matrix.path }}/Dockerfile \
             .

@@ -5,8 +5,10 @@ on:
     branches:
       - main
 
-env:
-  DOCKER_BUILDKIT: 1
+# Disabled due to https://github.com/moby/buildkit/issues/1981
+# TODO: BUILDKIT: re-enable after that issue is fixed
+# env:
+#   DOCKER_BUILDKIT: 1
 
 anchors:
   !include(../includes/common-anchors.yaml)
@@ -27,10 +29,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - <<: *pnpm-store-cache
-      - *setup-pnpm
       - <<: *node-modules-cache
-      - run: pnpm i --frozen-lockfile
+      - *setup-pnpm
       - <<: *fetch-target-branch
+      - run: pnpm i --frozen-lockfile
       - run: .scripts/ci/run-lint.ts
       - run: .scripts/ci/run-tests.ts unit
   build:
@@ -48,8 +50,8 @@ jobs:
             path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
-      - *setup-pnpm
       - <<: *node-modules-cache
+      - *setup-pnpm
       - <<: *fetch-target-branch
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
@@ -71,9 +73,13 @@ jobs:
         if: steps.needs-build.outputs.result == 'true'
         run: |
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
+          docker -v
+          # TODO: BUILDKIT: remove these pulls
+          docker pull ${{ env.IMAGE }}:latest > /dev/null || true
+          docker pull ${{ env.IMAGE }}:${{ github.event.pull_request.number }} > /dev/null || true
+          # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
           docker build \
             -t ${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
             --cache-from=${{ env.IMAGE }}:latest \
             --cache-from=${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
             -f ${{ matrix.path }}/Dockerfile \
@@ -95,8 +101,8 @@ jobs:
             path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
-      - *setup-pnpm
       - <<: *node-modules-cache
+      - *setup-pnpm
       - <<: *fetch-target-branch
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x

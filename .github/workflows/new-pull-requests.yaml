@@ -3,8 +3,6 @@ name: Tests and Build
   pull_request:
     branches:
       - main
-env:
-  DOCKER_BUILDKIT: 1
 jobs:
   lint-unit-tests:
     name: Lint and Unit Tests
@@ -15,24 +13,24 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpmstore-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v1.2.1
-        with:
-          version: 5.17.2
-      - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
+            ${{ runner.os }}-pnpmstore-
       - name: Cache node_modules
         uses: actions/cache@v2
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
-      - run: pnpm i --frozen-lockfile
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v1.2.1
+        with:
+          version: 5.17.2
+      - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
       - name: Fetch target branch
         run: >-
           git fetch --no-tags --prune --depth=1 origin +refs/heads/${{
           github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+      - run: pnpm i --frozen-lockfile
       - run: .scripts/ci/run-lint.ts
       - run: .scripts/ci/run-tests.ts unit
   build:
@@ -51,16 +49,16 @@ jobs:
             path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v1.2.1
-        with:
-          version: 5.17.2
-      - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
       - name: Cache node_modules
         uses: actions/cache@v2
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v1.2.1
+        with:
+          version: 5.17.2
+      - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
       - name: Fetch target branch
         run: >-
           git fetch --no-tags --prune --depth=1 origin +refs/heads/${{
@@ -92,9 +90,19 @@ jobs:
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }}
           --replace
 
+          docker -v
+
+          # TODO: BUILDKIT: remove these pulls
+
+          docker pull ${{ env.IMAGE }}:latest > /dev/null || true
+
+          docker pull ${{ env.IMAGE }}:${{ github.event.pull_request.number }} >
+          /dev/null || true
+
+          # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
+
           docker build \
             -t ${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
             --cache-from=${{ env.IMAGE }}:latest \
             --cache-from=${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
             -f ${{ matrix.path }}/Dockerfile \
@@ -117,16 +125,16 @@ jobs:
             path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v1.2.1
-        with:
-          version: 5.17.2
-      - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
       - name: Cache node_modules
         uses: actions/cache@v2
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v1.2.1
+        with:
+          version: 5.17.2
+      - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
       - name: Fetch target branch
         run: >-
           git fetch --no-tags --prune --depth=1 origin +refs/heads/${{

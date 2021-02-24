@@ -6,9 +6,9 @@ pnpm-store-cache: &pnpm-store-cache
   uses: actions/cache@v2
   with:
     path: ~/.pnpm-store
-    key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+    key: ${{ runner.os }}-pnpmstore-${{ hashFiles('**/pnpm-lock.yaml') }}
     restore-keys: |
-      ${{ runner.os }}-pnpm-store-
+      ${{ runner.os }}-pnpmstore-
 setup-pnpm: &setup-pnpm
   - name: Setup pnpm
     uses: pnpm/action-setup@v1.2.1

@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - main
-
 env:
-  DOCKER_BUILDKIT: 1
+  # Disabled due to https://github.com/moby/buildkit/issues/1981
+  # TODO: BUILDKIT: re-enable after that issue is fixed
+  # DOCKER_BUILDKIT: 1
   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
   WEB_API_APP: typescript-monorepo
 
@@ -40,6 +41,16 @@ jobs:
             || echo null
           )
           echo "::set-output name=result::$NUMBER"
+  pnpm-store-cache: # https://docs.github.com/en/actions/guides/caching-dependencies-to-speed-up-workflows#restrictions-for-accessing-a-cache
+    name: Create pnpm store cache for future PRs
+    runs-on: ubuntu-20.04
+    needs: pr-number
+    if: needs.pr-number.outputs.result != 'null'
+    steps:
+      - uses: actions/checkout@v2
+      - <<: *pnpm-store-cache
+      - *setup-pnpm
+      - run: pnpm i --frozen-lockfile
   publish-for-pr:
     name: Publish images for merged PR
     runs-on: ubuntu-20.04
@@ -127,10 +138,12 @@ jobs:
       - name: Build docker image
         run: |
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
+          # TODO: BUILDKIT: remove this pull
+          docker pull ${{ steps.ghcr-image-name.outputs.result }}:latest > /dev/null || true
+            # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
           docker build \
             -t ${{ steps.ghcr-image-name.outputs.result }}:latest \
             -t ${{ steps.heroku-image-name.outputs.result }} \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
             --cache-from=${{ steps.ghcr-image-name.outputs.result }}:latest \
             -f ${{ matrix.path }}/Dockerfile \
             .
