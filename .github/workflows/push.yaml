@@ -26,6 +26,27 @@ jobs:
             || echo null
           )
           echo "::set-output name=result::$NUMBER"
+  pnpm-store-cache:
+    name: Create pnpm store cache for future PRs
+    runs-on: ubuntu-20.04
+    needs: pr-number
+    if: needs.pr-number.outputs.result != 'null'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache pnpm store
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpmstore-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpmstore-
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v1.2.1
+        with:
+          version: 5.17.2
+          run_install: |
+            - args: [--frozen-lockfile]
+      - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
   publish-for-pr:
     name: Publish images for merged PR
     runs-on: ubuntu-20.04

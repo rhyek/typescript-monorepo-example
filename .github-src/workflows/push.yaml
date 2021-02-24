@@ -40,6 +40,15 @@ jobs:
             || echo null
           )
           echo "::set-output name=result::$NUMBER"
+  pnpm-store-cache: # https://docs.github.com/en/actions/guides/caching-dependencies-to-speed-up-workflows#restrictions-for-accessing-a-cache
+    name: Create pnpm store cache for future PRs
+    runs-on: ubuntu-20.04
+    needs: pr-number
+    if: needs.pr-number.outputs.result != 'null'
+    steps:
+      - uses: actions/checkout@v2
+      - <<: *pnpm-store-cache
+      - *setup-pnpm
   publish-for-pr:
     name: Publish images for merged PR
     runs-on: ubuntu-20.04
