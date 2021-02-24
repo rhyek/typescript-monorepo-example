@@ -52,6 +52,11 @@ jobs:
             path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
       - name: Setup pnpm
         uses: pnpm/action-setup@v1.2.1
         with:
@@ -59,11 +64,6 @@ jobs:
           run_install: |
             - args: [--frozen-lockfile]
       - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
-      - name: Cache node_modules
-        uses: actions/cache@v2
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
       - name: Fetch target branch
         run: >-
           git fetch --no-tags --prune --depth=1 origin +refs/heads/${{
@@ -95,6 +95,8 @@ jobs:
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }}
           --replace
 
+          docker -v
+
           docker build \
             -t ${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
@@ -120,6 +122,11 @@ jobs:
             path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
       - name: Setup pnpm
         uses: pnpm/action-setup@v1.2.1
         with:
@@ -127,11 +134,6 @@ jobs:
           run_install: |
             - args: [--frozen-lockfile]
       - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
-      - name: Cache node_modules
-        uses: actions/cache@v2
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
       - name: Fetch target branch
         run: >-
           git fetch --no-tags --prune --depth=1 origin +refs/heads/${{
