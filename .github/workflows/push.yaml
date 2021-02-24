@@ -184,10 +184,14 @@ jobs:
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }}
           --replace
 
+          # TODO: BUILDKIT: remove this pull
+
+          docker pull ${{ steps.ghcr-image-name.outputs.result }}:latest >
+          /dev/null || true
+            # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
           docker build \
             -t ${{ steps.ghcr-image-name.outputs.result }}:latest \
             -t ${{ steps.heroku-image-name.outputs.result }} \
-            # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
             --cache-from=${{ steps.ghcr-image-name.outputs.result }}:latest \
             -f ${{ matrix.path }}/Dockerfile \
             .

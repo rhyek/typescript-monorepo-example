@@ -94,14 +94,15 @@ jobs:
 
           # TODO: BUILDKIT: remove these pulls
 
-          docker pull ${{ env.IMAGE }}:latest || true
+          docker pull ${{ env.IMAGE }}:latest > /dev/null || true
 
-          docker pull ${{ env.IMAGE }}:${{ github.event.pull_request.number }}
-          || true
+          docker pull ${{ env.IMAGE }}:${{ github.event.pull_request.number }} >
+          /dev/null || true
+
+          # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
 
           docker build \
             -t ${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
-            # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
             --cache-from=${{ env.IMAGE }}:latest \
             --cache-from=${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
             -f ${{ matrix.path }}/Dockerfile \
