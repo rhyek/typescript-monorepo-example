@@ -107,6 +107,8 @@ jobs:
             || echo null
           )
 
+          echo "OLD_LATEST_IMAGE_ID: $OLD_LATEST_IMAGE_ID"
+
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{
           needs.pr-number.outputs.result }} ${{
           steps.ghcr-image-name.outputs.result }}:latest
@@ -188,7 +190,9 @@ jobs:
 
           docker pull ${{ steps.ghcr-image-name.outputs.result }}:latest >
           /dev/null || true
-            # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
+
+          # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
+
           docker build \
             -t ${{ steps.ghcr-image-name.outputs.result }}:latest \
             -t ${{ steps.heroku-image-name.outputs.result }} \
