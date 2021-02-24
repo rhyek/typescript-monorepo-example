@@ -25,9 +25,9 @@ jobs:
 
           IMAGE_ID=$(curl -s \
             -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-            -H "Accept: application/vnd.github.v3+json" \
+            -H 'Accept: application/vnd.github.v3+json' \
             "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions" \
-            | jq '.[] | select(.metadata.container.tags | index("${{ github.event.pull_request.number }}")).id' 2> /dev/null \
+            | jq '.[] | select(.metadata.container.tags | index("${{ github.event.pull_request.number }}")).id' \
             || echo null
           )
 
