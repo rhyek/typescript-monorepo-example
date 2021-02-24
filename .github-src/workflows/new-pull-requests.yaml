@@ -27,9 +27,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - <<: *pnpm-store-cache
-      - *setup-pnpm
       - <<: *node-modules-cache
+      - *setup-pnpm
       - <<: *fetch-target-branch
+      - run: pnpm i --frozen-lockfile
       - run: .scripts/ci/run-lint.ts
       - run: .scripts/ci/run-tests.ts unit
   build:
@@ -47,8 +48,8 @@ jobs:
             path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
-      - *setup-pnpm
       - <<: *node-modules-cache
+      - *setup-pnpm
       - <<: *fetch-target-branch
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
@@ -70,6 +71,7 @@ jobs:
         if: steps.needs-build.outputs.result == 'true'
         run: |
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
+          docker -v
           docker build \
             -t ${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
@@ -94,8 +96,8 @@ jobs:
             path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
-      - *setup-pnpm
       - <<: *node-modules-cache
+      - *setup-pnpm
       - <<: *fetch-target-branch
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x

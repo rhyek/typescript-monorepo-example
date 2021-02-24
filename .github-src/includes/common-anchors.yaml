@@ -14,6 +14,4 @@ setup-pnpm: &setup-pnpm
     uses: pnpm/action-setup@v1.2.1
     with:
       version: 5.17.2
-      run_install: |
-        - args: [--frozen-lockfile]
   - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH

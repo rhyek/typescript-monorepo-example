@@ -18,22 +18,21 @@ jobs:
           key: ${{ runner.os }}-pnpmstore-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpmstore-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v1.2.1
-        with:
-          version: 5.17.2
-          run_install: |
-            - args: [--frozen-lockfile]
-      - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
       - name: Cache node_modules
         uses: actions/cache@v2
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-tests-node-modules-${{ github.sha }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v1.2.1
+        with:
+          version: 5.17.2
+      - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
       - name: Fetch target branch
         run: >-
           git fetch --no-tags --prune --depth=1 origin +refs/heads/${{
           github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+      - run: pnpm i --frozen-lockfile
       - run: .scripts/ci/run-lint.ts
       - run: .scripts/ci/run-tests.ts unit
   build:
@@ -61,8 +60,6 @@ jobs:
         uses: pnpm/action-setup@v1.2.1
         with:
           version: 5.17.2
-          run_install: |
-            - args: [--frozen-lockfile]
       - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
       - name: Fetch target branch
         run: >-
@@ -131,8 +128,6 @@ jobs:
         uses: pnpm/action-setup@v1.2.1
         with:
           version: 5.17.2
-          run_install: |
-            - args: [--frozen-lockfile]
       - run: echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
       - name: Fetch target branch
         run: >-
