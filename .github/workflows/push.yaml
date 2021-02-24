@@ -4,7 +4,6 @@ name: Publish and Deploy
     branches:
       - main
 env:
-  DOCKER_BUILDKIT: 1
   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
   WEB_API_APP: typescript-monorepo
 jobs:
@@ -188,7 +187,7 @@ jobs:
           docker build \
             -t ${{ steps.ghcr-image-name.outputs.result }}:latest \
             -t ${{ steps.heroku-image-name.outputs.result }} \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
             --cache-from=${{ steps.ghcr-image-name.outputs.result }}:latest \
             -f ${{ matrix.path }}/Dockerfile \
             .

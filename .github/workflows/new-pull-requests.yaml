@@ -3,8 +3,6 @@ name: Tests and Build
   pull_request:
     branches:
       - main
-env:
-  DOCKER_BUILDKIT: 1
 jobs:
   lint-unit-tests:
     name: Lint and Unit Tests
@@ -94,9 +92,16 @@ jobs:
 
           docker -v
 
+          # TODO: BUILDKIT: remove these pulls
+
+          docker pull ${{ env.IMAGE }}:latest || true
+
+          docker pull ${{ env.IMAGE }}:${{ github.event.pull_request.number }}
+          || true
+
           docker build \
             -t ${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
             --cache-from=${{ env.IMAGE }}:latest \
             --cache-from=${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
             -f ${{ matrix.path }}/Dockerfile \
