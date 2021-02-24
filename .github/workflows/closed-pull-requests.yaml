@@ -21,7 +21,7 @@ jobs:
       - name: Delete PR image if exists
         run: >
           PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{
-          env.GITHUB_REF_SLUG }}-${{ matrix.name }}
+          env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}
 
           IMAGE_ID=$(curl -s \
             -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
