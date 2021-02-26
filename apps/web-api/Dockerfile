@@ -1,4 +1,4 @@
-FROM node:14.15-alpine3.13
+FROM node:14-alpine
 
 RUN npm i -g pnpm
 
@@ -40,3 +40,6 @@ CMD ["pnpm", "start:prod"]
 # docker rmi rhyek/typescript-monorepo-web-api:latest
 
 # yes
+
+# TODO:
+# use cross-node volumes for cache mounts during build: https://github.com/moby/buildkit/issues/1512

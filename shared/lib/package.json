@@ -8,7 +8,7 @@
     "lint": "eslint \"src/**/*.ts\" --fix",
     "test:unit": "jest",
     "test:watch": "jest --watch",
-    "test:all": "pnpm lint && pnpm test:unit"
+    "build": "ttsc --build tsconfig.build.json"
   },
   "keywords": [],
   "author": "",

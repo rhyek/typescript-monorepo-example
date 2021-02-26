@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "dev": "PORT=3000 INTERNAL_API_PORT=3001 NODE_ENV=development tsc-watch --compiler ttypescript/bin/tsc -b tsconfig.build.json --onSuccess \"node --inspect dist/main\"",
-    "build": "ttsc --build --force tsconfig.build.json",
+    "build": "ttsc --build tsconfig.build.json",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "test:unit": "ttsc -b tsconfig.test.json && jest",
