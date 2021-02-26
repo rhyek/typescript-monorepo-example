@@ -5,9 +5,6 @@ on:
     branches:
       - main
 env:
-  # Disabled due to https://github.com/moby/buildkit/issues/1981
-  # TODO: BUILDKIT: re-enable after that issue is fixed
-  # DOCKER_BUILDKIT: 1
   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
   WEB_API_APP: typescript-monorepo
 
@@ -21,6 +18,9 @@ anchors:
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       SLACK_USERNAME: github-actions
       SLACK_COLOR: ${{ job.status == 'success' && 'good' || job.status == 'cancelled' && '#808080' || 'danger' }}
+  heroku-docker-login: &heroku-docker-login
+    name: Heroku Docker login
+    run: echo ${{ secrets.HEROKU_API_KEY }} | docker login registry.heroku.com --username=_ --password-stdin
 
 jobs:
   pr-number:
@@ -77,10 +77,11 @@ jobs:
           docker pull ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} && EXIT_CODE=0 || EXIT_CODE=$?
           RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
           echo "::set-output name=result::$RESULT"
+      - <<: *heroku-docker-login
+        if: steps.image-exists.outputs.result == 'true'
       - name: Tag and push to heroku
         if: steps.image-exists.outputs.result == 'true'
         run: |
-          docker login --username=_ --password=${{ env.HEROKU_API_KEY }} registry.heroku.com
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} ${{ steps.heroku-image-name.outputs.result }}
           docker push ${{ steps.heroku-image-name.outputs.result }}
       - name: Tag 'latest' and push to ghcr
@@ -136,25 +137,25 @@ jobs:
       - name: Set Heroku image name
         id: heroku-image-name
         run: echo "::set-output name=result::registry.heroku.com/${{ env[matrix.heroku_app_key] }}/web"
+      - uses: docker/setup-buildx-action@v1
       - name: Build docker image
         run: |
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
-          # TODO: BUILDKIT: remove this pull
-          docker pull ${{ steps.ghcr-image-name.outputs.result }}:latest > /dev/null || true
-          # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
-          docker build \
+          docker -v
+          docker buildx version
+          docker buildx build \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --load \
+            --cache-from=${{ steps.ghcr-image-name.outputs.result }}:latest \
             -t ${{ steps.ghcr-image-name.outputs.result }}:latest \
             -t ${{ steps.heroku-image-name.outputs.result }} \
-            --cache-from=${{ steps.ghcr-image-name.outputs.result }}:latest \
             -f ${{ matrix.path }}/Dockerfile \
             .
       - name: Push to ghcr
-        run: |
-          docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
+        run: docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
+      - <<: *heroku-docker-login
       - name: Push to heroku
-        run: |
-          docker login --username=_ --password=${{ env.HEROKU_API_KEY }} registry.heroku.com
-          docker push ${{ steps.heroku-image-name.outputs.result }}
+        run: docker push ${{ steps.heroku-image-name.outputs.result }}
       - <<: *report
   deploy:
     name: Deploy apps
