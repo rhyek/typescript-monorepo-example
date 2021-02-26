@@ -81,12 +81,13 @@ jobs:
           RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
 
           echo "::set-output name=result::$RESULT"
+      - name: Heroku Docker login
+        run: >-
+          echo ${{ secrets.HEROKU_API_KEY }} | docker login registry.heroku.com
+          --username=_ --password-stdin
       - name: Tag and push to heroku
         if: steps.image-exists.outputs.result == 'true'
         run: >
-          docker login --username=_ --password=${{ env.HEROKU_API_KEY }}
-          registry.heroku.com
-
           docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{
           needs.pr-number.outputs.result }} ${{
           steps.heroku-image-name.outputs.result }}
@@ -202,12 +203,12 @@ jobs:
       - name: Push to ghcr
         run: |
           docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
+      - name: Heroku Docker login
+        run: >-
+          echo ${{ secrets.HEROKU_API_KEY }} | docker login registry.heroku.com
+          --username=_ --password-stdin
       - name: Push to heroku
-        run: >
-          docker login --username=_ --password=${{ env.HEROKU_API_KEY }}
-          registry.heroku.com
-
-          docker push ${{ steps.heroku-image-name.outputs.result }}
+        run: docker push ${{ steps.heroku-image-name.outputs.result }}
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         if: cancelled() || failure()
