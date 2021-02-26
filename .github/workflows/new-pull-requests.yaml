@@ -84,6 +84,8 @@ jobs:
             fi
           fi
           echo "::set-output name=result::$NEEDS_BUILD"
+      - uses: docker/setup-buildx-action@v1
+        if: steps.needs-build.outputs.result == 'true'
       - name: Build docker image
         if: steps.needs-build.outputs.result == 'true'
         run: >
@@ -92,19 +94,14 @@ jobs:
 
           docker -v
 
-          # TODO: BUILDKIT: remove these pulls
+          docker buildx version
 
-          docker pull ${{ env.IMAGE }}:latest > /dev/null || true
-
-          docker pull ${{ env.IMAGE }}:${{ github.event.pull_request.number }} >
-          /dev/null || true
-
-          # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
-
-          docker build \
-            -t ${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
+          docker buildx build \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --load \
             --cache-from=${{ env.IMAGE }}:latest \
             --cache-from=${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
+            -t ${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
             -f ${{ matrix.path }}/Dockerfile \
             .
           docker push ${{ env.IMAGE }}:${{ github.event.pull_request.number }}

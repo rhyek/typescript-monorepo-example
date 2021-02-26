@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node-transpile-only
 import { findChangedPackages } from './common/find-changed-packages';
-import { pnpmExec, pnpmRun } from './common/pnpm-helpers';
+import { pnpmRun } from './common/pnpm-helpers';
 
 /**
  * gather all shared packages that need to be built and build them first.
@@ -33,7 +33,7 @@ export async function main(testType: 'unit' | 'e2e') {
       includeDependencies: true,
     },
   ]);
-  await pnpmExec(['pnpx', 'ttsc', '-b', 'tsconfig.build.json'], libs, true);
+  await pnpmRun('build', libs, true);
   const all = await findChangedPackages([
     {
       // any shared package who's own files changed

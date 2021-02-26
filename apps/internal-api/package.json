@@ -6,15 +6,12 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "ttsc --build --force tsconfig.build.json",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "dev": "PORT=3001 NODE_ENV=development tsc-watch --compiler ttypescript/bin/tsc -b tsconfig.build.json --onSuccess \"node --inspect dist/main\"",
+    "build": "ttsc --build tsconfig.build.json",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "test:unit": "ttsc -b tsconfig.test.json && jest",
     "test:watch": "ttsc -b tsconfig.test.json && jest --watch",
-    "test:cov": "ttsc -b tsconfig.test.json && jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "ttsc -b tsconfig.test.json && jest --config ./test/jest.config.js"
   },
   "dependencies": {
