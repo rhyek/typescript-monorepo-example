@@ -85,6 +85,7 @@ jobs:
         run: >-
           echo ${{ secrets.HEROKU_API_KEY }} | docker login registry.heroku.com
           --username=_ --password-stdin
+        if: steps.image-exists.outputs.result == 'true'
       - name: Tag and push to heroku
         if: steps.image-exists.outputs.result == 'true'
         run: >
@@ -182,27 +183,26 @@ jobs:
         run: >-
           echo "::set-output name=result::registry.heroku.com/${{
           env[matrix.heroku_app_key] }}/web"
+      - uses: docker/setup-buildx-action@v1
       - name: Build docker image
         run: >
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }}
           --replace
 
-          # TODO: BUILDKIT: remove this pull
+          docker -v
 
-          docker pull ${{ steps.ghcr-image-name.outputs.result }}:latest >
-          /dev/null || true
+          docker buildx version
 
-          # TODO: BUILDKIT --build-arg BUILDKIT_INLINE_CACHE=1 \
-
-          docker build \
+          docker buildx build \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --load \
+            --cache-from=${{ steps.ghcr-image-name.outputs.result }}:latest \
             -t ${{ steps.ghcr-image-name.outputs.result }}:latest \
             -t ${{ steps.heroku-image-name.outputs.result }} \
-            --cache-from=${{ steps.ghcr-image-name.outputs.result }}:latest \
             -f ${{ matrix.path }}/Dockerfile \
             .
       - name: Push to ghcr
-        run: |
-          docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
+        run: docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
       - name: Heroku Docker login
         run: >-
           echo ${{ secrets.HEROKU_API_KEY }} | docker login registry.heroku.com
