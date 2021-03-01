@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+#prettier-ignore
+env:
+  !include(../includes/envs.yaml)
+
 anchors:
   !include(../includes/common-anchors.yaml)
   node-modules-cache: &node-modules-cache
@@ -69,14 +73,14 @@ jobs:
       - name: Build docker image
         if: steps.needs-build.outputs.result == 'true'
         run: |
+          PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}
           docker -v
           docker buildx version
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
-          PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}
           OLD_PR_IMAGE_ID=$(curl -s \
             -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
             -H 'Accept: application/vnd.github.v3+json' \
-            "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions" \
+            "https://api.github.com/${{ env.PACKAGES_PATH_PREFIX }}/packages/container/$PACKAGE_NAME/versions" \
             | jq -rM 'first(.[] | select(.metadata.container.tags | index("${{ github.event.pull_request.number }}"))).id // null' \
             || echo null
           )
@@ -91,7 +95,7 @@ jobs:
           NEW_PR_IMAGE_ID=$(curl -s \
             -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
             -H 'Accept: application/vnd.github.v3+json' \
-            "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions" \
+            "https://api.github.com/${{ env.PACKAGES_PATH_PREFIX }}/packages/container/$PACKAGE_NAME/versions" \
             | jq -rM 'first(.[] | select(.metadata.container.tags | index("${{ github.event.pull_request.number }}"))).id // null' \
             || echo null
           )
@@ -100,7 +104,7 @@ jobs:
               -X DELETE \
               -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
               -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions/$OLD_PR_IMAGE_ID"
+              "https://api.github.com/${{ env.PACKAGES_PATH_PREFIX }}/packages/container/$PACKAGE_NAME/versions/$OLD_PR_IMAGE_ID"
             echo "Deleted old PR image with id $OLD_PR_IMAGE_ID"
           fi
   integration-tests:

@@ -28,8 +28,8 @@ async function main() {
   for (const file of files) {
     const srcFile = path.resolve(srcDir, file);
     let srcContent = await fs.readFile(srcFile, 'utf8');
-    const match = srcContent.match(includeRegex);
-    if (match) {
+    let match: RegExpMatchArray | null = null;
+    while ((match = srcContent.match(includeRegex))) {
       const [matchedString, spaces, includePath] = match;
       const { index } = match;
       const includeContent = (

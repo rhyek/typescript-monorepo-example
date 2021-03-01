@@ -5,6 +5,7 @@ on:
     branches:
       - main
 env:
+  !include(../includes/envs.yaml)
   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
   WEB_API_APP: typescript-monorepo
 
@@ -64,17 +65,16 @@ jobs:
     steps:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
-      - name: Set GHCR.io image name
-        id: ghcr-image-name
-        run: echo "::set-output name=result::ghcr.io/${{ github.repository }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}"
-      - name: Set Heroku image name
-        id: heroku-image-name
-        run: echo "::set-output name=result::registry.heroku.com/${{ env[matrix.heroku_app_key] }}/web"
+      - name: Set image names
+        id: image-names
+        run: |
+          echo "::set-output name=github::ghcr.io/${{ github.repository }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}"
+          echo "::set-output name=heroku::registry.heroku.com/${{ env[matrix.heroku_app_key] }}/web"
       - <<: *docker-login
       - name: Check if image for PR exists
         id: image-exists
         run: |
-          docker pull ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} && EXIT_CODE=0 || EXIT_CODE=$?
+          docker pull ${{ steps.image-names.outputs.github }}:${{ needs.pr-number.outputs.result }} && EXIT_CODE=0 || EXIT_CODE=$?
           RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
           echo "::set-output name=result::$RESULT"
       - <<: *heroku-docker-login
@@ -82,8 +82,8 @@ jobs:
       - name: Tag and push to heroku
         if: steps.image-exists.outputs.result == 'true'
         run: |
-          docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} ${{ steps.heroku-image-name.outputs.result }}
-          docker push ${{ steps.heroku-image-name.outputs.result }}
+          docker tag ${{ steps.image-names.outputs.github }}:${{ needs.pr-number.outputs.result }} ${{ steps.image-names.outputs.heroku }}
+          docker push ${{ steps.image-names.outputs.heroku }}
       - name: Tag 'latest' and push to ghcr
         id: push-to-ghcr
         if: steps.image-exists.outputs.result == 'true'
@@ -92,13 +92,13 @@ jobs:
           OLD_LATEST_IMAGE_ID=$(curl -s \
             -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
             -H 'Accept: application/vnd.github.v3+json' \
-            "https://api.github.com/user/packages/container/$PACKAGE_NAME/versions" \
+            "https://api.github.com/${{ env.PACKAGES_PATH_PREFIX }}/packages/container/$PACKAGE_NAME/versions" \
             | jq -rM 'first(.[] | select(.metadata.container.tags | index("latest"))).id // null' \
             || echo null
           )
           echo "OLD_LATEST_IMAGE_ID: $OLD_LATEST_IMAGE_ID"
-          docker tag ${{ steps.ghcr-image-name.outputs.result }}:${{ needs.pr-number.outputs.result }} ${{ steps.ghcr-image-name.outputs.result }}:latest
-          docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
+          docker tag ${{ steps.image-names.outputs.github }}:${{ needs.pr-number.outputs.result }} ${{ steps.image-names.outputs.github }}:latest
+          docker push ${{ steps.image-names.outputs.github }}:latest
 
           echo "::set-output name=package-name::$PACKAGE_NAME"
           echo "::set-output name=old-latest-image-id::$OLD_LATEST_IMAGE_ID"
@@ -109,7 +109,7 @@ jobs:
             -X DELETE \
             -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/user/packages/container/${{ steps.push-to-ghcr.outputs.package-name }}/versions/${{ steps.push-to-ghcr.outputs.old-latest-image-id }}
+            https://api.github.com/${{ env.PACKAGES_PATH_PREFIX }}/packages/container/${{ steps.push-to-ghcr.outputs.package-name }}/versions/${{ steps.push-to-ghcr.outputs.old-latest-image-id }}
       - <<: *report
   publish-for-push:
     name: Publish images for direct push
@@ -131,24 +131,23 @@ jobs:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - <<: *docker-login
-      - name: Set GHCR.io image name
-        id: ghcr-image-name
-        run: echo "::set-output name=result::ghcr.io/${{ github.repository }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}"
-      - name: Set Heroku image name
-        id: heroku-image-name
-        run: echo "::set-output name=result::registry.heroku.com/${{ env[matrix.heroku_app_key] }}/web"
-      - uses: docker/setup-buildx-action@v1
       - <<: *heroku-docker-login
+      - name: Set image names
+        id: image-names
+        run: |
+          echo "::set-output name=github::ghcr.io/${{ github.repository }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}"
+          echo "::set-output name=heroku::registry.heroku.com/${{ env[matrix.heroku_app_key] }}/web"
+      - uses: docker/setup-buildx-action@v1
       - name: Build and Push docker image
         run: |
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
           docker -v
           docker buildx version
           docker buildx build \
-            --cache-from=${{ steps.ghcr-image-name.outputs.result }}:latest \
+            --cache-from=${{ steps.image-names.outputs.github }}:latest \
             --cache-to=type=inline \
-            -t ${{ steps.ghcr-image-name.outputs.result }}:latest \
-            -t ${{ steps.heroku-image-name.outputs.result }} \
+            -t ${{ steps.image-names.outputs.github }}:latest \
+            -t ${{ steps.image-names.outputs.heroku }} \
             -f ${{ matrix.path }}/Dockerfile \
             --push \
             .
