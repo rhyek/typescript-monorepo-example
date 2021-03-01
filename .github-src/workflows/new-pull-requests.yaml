@@ -7,10 +7,10 @@ on:
 
 #prettier-ignore
 env:
-  !include(../includes/envs.yaml)
+  !include(../includes/envs)
 
 anchors:
-  !include(../includes/common-anchors.yaml)
+  !include(../includes/common-anchors)
   node-modules-cache: &node-modules-cache
     name: Cache node_modules
     uses: actions/cache@v2

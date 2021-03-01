@@ -5,12 +5,12 @@ on:
     branches:
       - main
 env:
-  !include(../includes/envs.yaml)
+  !include(../includes/envs)
   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
   WEB_API_APP: typescript-monorepo
 
 anchors:
-  !include(../includes/common-anchors.yaml)
+  !include(../includes/common-anchors)
   report: &report
     name: Slack Notification
     uses: rtCamp/action-slack-notify@v2

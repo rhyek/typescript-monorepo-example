@@ -32,11 +32,11 @@ async function main() {
     while ((match = srcContent.match(includeRegex))) {
       const [matchedString, spaces, includePath] = match;
       const { index } = match;
+      const realPath = includePath.match(/\.ya?ml$/)
+        ? includePath
+        : `${includePath}.yaml`;
       const includeContent = (
-        await fs.readFile(
-          path.resolve(path.dirname(srcFile), includePath),
-          'utf8',
-        )
+        await fs.readFile(path.resolve(path.dirname(srcFile), realPath), 'utf8')
       )
         .split('\n')
         .map((line) => `${spaces ?? ''}${line}`)

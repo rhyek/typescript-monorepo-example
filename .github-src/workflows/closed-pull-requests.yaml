@@ -8,7 +8,7 @@ on:
 
 #prettier-ignore
 env:
-  !include(../includes/envs.yaml)
+  !include(../includes/envs)
 
 jobs:
   delete-unused-images:
