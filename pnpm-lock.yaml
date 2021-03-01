@@ -58,6 +58,7 @@ importers:
       '@types/jest': 26.0.20
       '@types/node': 14.14.28
       '@types/supertest': 2.0.10
+      decimal.js: 9.0.1
       reflect-metadata: 0.1.13
       rimraf: 3.0.2
       rxjs: 6.6.3
@@ -89,6 +90,7 @@ importers:
       '@types/jest': ^26.0.15
       '@types/node': ^14.14.6
       '@types/supertest': ^2.0.10
+      decimal.js: '9'
       eslint: ^7.12.1
       jest: ^26.6.3
       prettier: ^2.1.2
@@ -2851,6 +2853,10 @@ packages:
     dev: true
     resolution:
       integrity: sha512-KaL7+6Fw6i5A2XSnsbhm/6B+NuEA7TZ4vqxnd5tXz9sbKtrN9Srj8ab4vKVdK8YAqZO9P1kg45Y6YLoduPf+kw==
+  /decimal.js/9.0.1:
+    dev: false
+    resolution:
+      integrity: sha512-2h0iKbJwnImBk4TGk7CG1xadoA0g3LDPlQhQzbZ221zvG0p2YVUedbKIPsOZXKZGx6YmZMJKYOalpCMxSdDqTQ==
   /decode-uri-component/0.2.0:
     dev: true
     engines:

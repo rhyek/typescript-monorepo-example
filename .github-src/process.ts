@@ -28,15 +28,15 @@ async function main() {
   for (const file of files) {
     const srcFile = path.resolve(srcDir, file);
     let srcContent = await fs.readFile(srcFile, 'utf8');
-    const match = srcContent.match(includeRegex);
-    if (match) {
+    let match: RegExpMatchArray | null = null;
+    while ((match = srcContent.match(includeRegex))) {
       const [matchedString, spaces, includePath] = match;
       const { index } = match;
+      const realPath = includePath.match(/\.ya?ml$/)
+        ? includePath
+        : `${includePath}.yaml`;
       const includeContent = (
-        await fs.readFile(
-          path.resolve(path.dirname(srcFile), includePath),
-          'utf8',
-        )
+        await fs.readFile(path.resolve(path.dirname(srcFile), realPath), 'utf8')
       )
         .split('\n')
         .map((line) => `${spaces ?? ''}${line}`)

@@ -1,0 +1,44 @@
+# https://github.com/pnpm/benchmarks-of-javascript-package-managers
+# control --mount cache location on host https://github.com/moby/buildkit/issues/1512
+FROM node:14-alpine as deps
+RUN npm i -g pnpm
+WORKDIR /monorepo
+COPY pnpm-*.yaml ./
+COPY shared/lib/package.json shared/lib/
+COPY apps/web-api/package.json apps/web-api/
+COPY apps/internal-api/package.json apps/internal-api/
+# RUN --mount=type=cache,target=/root/.pnpm-store \
+#   pnpm i --frozen-lockfile
+RUN pnpm i --frozen-lockfile
+
+FROM deps as web-api-builder
+COPY tsconfig.json ./
+COPY \
+  shared/lib/tsconfig.json \
+  shared/lib/tsconfig.build.json \
+  shared/lib/
+COPY shared/lib/src shared/lib/src
+COPY \
+  apps/web-api/tsconfig.json \
+  apps/web-api/tsconfig.build.json \
+  apps/web-api/
+COPY apps/web-api/src apps/web-api/src
+RUN pnpm run build --filter={apps/web-api}
+
+FROM node:14-alpine as web-api
+WORKDIR /monorepo
+RUN npm i -g pnpm
+COPY pnpm-workspace.yaml ./
+COPY web-api.pnpm-lock.yaml ./pnpm-lock.yaml
+COPY shared/lib/package.json shared/lib/
+COPY apps/web-api/package.json apps/web-api/
+# RUN \
+#   --mount=type=bind,from=web-api-builder,source=/root/.pnpm-store,target=/root/.pnpm-store \
+#   pnpm i --frozen-lockfile --prod --offline
+RUN \
+  --mount=type=cache,from=web-api-builder,source=/root/.pnpm-store,target=/root/.pnpm-store \
+  pnpm i --frozen-lockfile --prod --offline
+COPY --from=web-api-builder /monorepo/shared/lib/dist shared/lib/dist
+COPY --from=web-api-builder /monorepo/apps/web-api/dist apps/web-api/dist
+WORKDIR /monorepo/apps/web-api
+CMD ["node", "dist/main"]
