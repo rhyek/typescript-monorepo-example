@@ -138,24 +138,20 @@ jobs:
         id: heroku-image-name
         run: echo "::set-output name=result::registry.heroku.com/${{ env[matrix.heroku_app_key] }}/web"
       - uses: docker/setup-buildx-action@v1
-      - name: Build docker image
+      - <<: *heroku-docker-login
+      - name: Build and Push docker image
         run: |
           .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
           docker -v
           docker buildx version
           docker buildx build \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --load \
             --cache-from=${{ steps.ghcr-image-name.outputs.result }}:latest \
+            --cache-to=type=inline \
             -t ${{ steps.ghcr-image-name.outputs.result }}:latest \
             -t ${{ steps.heroku-image-name.outputs.result }} \
             -f ${{ matrix.path }}/Dockerfile \
+            --push \
             .
-      - name: Push to ghcr
-        run: docker push ${{ steps.ghcr-image-name.outputs.result }}:latest
-      - <<: *heroku-docker-login
-      - name: Push to heroku
-        run: docker push ${{ steps.heroku-image-name.outputs.result }}
       - <<: *report
   deploy:
     name: Deploy apps

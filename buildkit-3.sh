@@ -12,35 +12,33 @@ for run in {1..4}; do
   
   docker buildx rm mybuilder1
 
-  docker buildx create --name mybuilder1 --driver docker-container
+  docker buildx create --name mybuilder1 --use
 
-  docker buildx use mybuilder1
-  
   OLD_PR_IMAGE_ID=$(curl -s \
     -H "Authorization: Bearer $DOCKER_TOKEN" \
     -H 'Accept: application/vnd.github.v3+json' \
     "https://api.github.com/user/packages/container/typescript-monorepo-example-main-web-api/versions" \
-    | jq -rM 'first(.[] | select(.metadata.container.tags | index("rofl"))).id // null' > /dev/null \
+    | jq -rM 'first(.[] | select(.metadata.container.tags | index("rofl"))).id // null' 2> /dev/null \
     || echo null
   )
 
   docker buildx build \
-    --build-arg BUILDKIT_INLINE_CACHE=1 \
-    --load \
     --cache-from=ghcr.io/rhyek/typescript-monorepo-example-main-web-api:rofl \
+    --cache-to=type=inline \
     -t ghcr.io/rhyek/typescript-monorepo-example-main-web-api:rofl \
     -f apps/web-api/Dockerfile \
+    --push \
     .
 
   # docker run -it ghcr.io/rhyek/typescript-monorepo-example-main-web-api:rofl stat /monorepo/apps/web-api/dist/main.js
 
-  docker push ghcr.io/rhyek/typescript-monorepo-example-main-web-api:rofl
+  # docker push ghcr.io/rhyek/typescript-monorepo-example-main-web-api:rofl
 
   NEW_PR_IMAGE_ID=$(curl -s \
     -H "Authorization: Bearer $DOCKER_TOKEN" \
     -H 'Accept: application/vnd.github.v3+json' \
     "https://api.github.com/user/packages/container/typescript-monorepo-example-main-web-api/versions" \
-    | jq -rM 'first(.[] | select(.metadata.container.tags | index("rofl"))).id // null' > /dev/null \
+    | jq -rM 'first(.[] | select(.metadata.container.tags | index("rofl"))).id // null' 2> /dev/null \
     || echo null
   )
 

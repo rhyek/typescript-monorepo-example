@@ -8,8 +8,9 @@ async function bootstrap() {
   if (typeof port === 'undefined') {
     throw new Error('Port not defined.');
   }
+  app.enableShutdownHooks();
   await app.listen(port, () => {
-    Logger.log(`Listening on port ${port}!`);
+    Logger.log(`Listening on port ${port}!!`);
   });
 }
 bootstrap();

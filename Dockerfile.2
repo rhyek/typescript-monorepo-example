@@ -1,0 +1,14 @@
+#syntax=docker/dockerfile:1.2
+
+FROM node:14-alpine as deps
+RUN npm i -g pnpm
+WORKDIR /monorepo
+COPY pnpm-*.yaml ./
+COPY tsconfig.json ./
+COPY shared/lib /monorepo/shared/lib/
+COPY apps/web-api /monorepo/apps/web-api
+# RUN \
+#   --mount=type=bind,from=deps,source=/root/.pnpm-store,target=/root/.pnpm-store \
+#   pnpm i --frozen-lockfile --offline
+RUN pnpm i --frozen-lockfile
+
