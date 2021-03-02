@@ -227,13 +227,12 @@ jobs:
       - run: curl -s https://cli-assets.heroku.com/install.sh | sh
       - run: heroku container:login
       - run: heroku container:release web --app=$WEB_API_APP
-      - name: Inject slug/short variables
-        uses: rlespinasse/github-slug-action@v3.x
-      - name: Simple Slack Notify
-        uses: edge/simple-slack-notify@1.0.4
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
         if: always()
-        with:
-          text: Deploy for branch ${{ env.GITHUB_REF_SLUG }}
-          color: ${{ success() && 'good' || 'danger' }}
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_USERNAME: github-actions
+          SLACK_COLOR: >-
+            ${{ job.status == 'success' && 'good' || job.status == 'cancelled'
+            && '#808080' || 'danger' }}
