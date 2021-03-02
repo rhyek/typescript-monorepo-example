@@ -4,13 +4,11 @@
     "baseUrl": "./",
     "paths": {
       "src": ["./src"],
-      "test": ["./test"],
-      "@my/lib": ["../../shared/lib/src"], // this is just for intellisense. not present in build or test configs.
+      "test": ["./test"]
     }
   },
   "include": [
     "./src",
-    "./test",
-    "../../shared/lib/src", // this is just for intellisense. not present in build or test configs.
+    "./test"
   ]
 }

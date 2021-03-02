@@ -1,6 +1,6 @@
-import { capitalize } from '@my/lib';
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { capitalize } from '@my/lib';
 
 @Injectable()
 export class AppService {

@@ -1,8 +1,5 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "paths": {}
-  },
   "include": [],
   "references": [
     { "path": "../../shared/lib/tsconfig.build.json" }
