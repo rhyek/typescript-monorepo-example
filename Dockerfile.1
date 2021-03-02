@@ -17,25 +17,26 @@ COPY \
   shared/lib/
 COPY shared/lib/src shared/lib/src
 COPY \
+  apps/web-api/package.json \
   apps/web-api/tsconfig.json \
   apps/web-api/tsconfig.build.json \
   apps/web-api/
 COPY apps/web-api/src apps/web-api/src
 RUN pnpm run build --filter={apps/web-api}
 
-FROM deps as internal-api-builder
-COPY tsconfig.json ./
-COPY \
-  shared/lib/tsconfig.json \
-  shared/lib/tsconfig.build.json \
-  shared/lib/
-COPY shared/lib/src shared/lib/src
-COPY \
-  apps/internal-api/tsconfig.json \
-  apps/internal-api/tsconfig.build.json \
-  apps/internal-api/
-COPY apps/internal-api/src apps/internal-api/src
-RUN pnpm run build --filter={apps/internal-api}
+# FROM deps as internal-api-builder
+# COPY tsconfig.json ./
+# COPY \
+#   shared/lib/tsconfig.json \
+#   shared/lib/tsconfig.build.json \
+#   shared/lib/
+# COPY shared/lib/src shared/lib/src
+# COPY \
+#   apps/internal-api/tsconfig.json \
+#   apps/internal-api/tsconfig.build.json \
+#   apps/internal-api/
+# COPY apps/internal-api/src apps/internal-api/src
+# RUN pnpm run build --filter={apps/internal-api}
 
 FROM node:14-alpine as web-api
 WORKDIR /monorepo
@@ -45,24 +46,24 @@ COPY web-api.pnpm-lock.yaml ./pnpm-lock.yaml
 COPY shared/lib/package.json shared/lib/
 COPY apps/web-api/package.json apps/web-api/
 RUN \
-  --mount=type=cache,from=web-api-builder,source=/root/.pnpm-store,target=/root/.pnpm-store \
+  --mount=type=cache,from=deps,source=/root/.pnpm-store,target=/root/.pnpm-store \
   pnpm i --frozen-lockfile --prod --offline
 COPY --from=web-api-builder /monorepo/shared/lib/dist shared/lib/dist
 COPY --from=web-api-builder /monorepo/apps/web-api/dist apps/web-api/dist
 WORKDIR /monorepo/apps/web-api
 CMD ["node", "dist/main"]
 
-FROM node:14-alpine as internal-api
-WORKDIR /monorepo
-RUN npm i -g pnpm
-COPY pnpm-workspace.yaml ./
-COPY internal-api.pnpm-lock.yaml ./pnpm-lock.yaml
-COPY shared/lib/package.json shared/lib/
-COPY apps/internal-api/package.json apps/internal-api/
-RUN \
-  --mount=type=cache,from=internal-api-builder,source=/root/.pnpm-store,target=/root/.pnpm-store \
-  pnpm i --frozen-lockfile --prod --offline
-COPY --from=internal-api-builder /monorepo/shared/lib/dist shared/lib/dist
-COPY --from=internal-api-builder /monorepo/apps/internal-api/dist apps/internal-api/dist
-WORKDIR /monorepo/apps/internal-api
-CMD ["node", "dist/main"]
+# FROM node:14-alpine as internal-api
+# WORKDIR /monorepo
+# RUN npm i -g pnpm
+# COPY pnpm-workspace.yaml ./
+# COPY internal-api.pnpm-lock.yaml ./pnpm-lock.yaml
+# COPY shared/lib/package.json shared/lib/
+# COPY apps/internal-api/package.json apps/internal-api/
+# RUN \
+#   --mount=type=cache,from=internal-api-builder,source=/root/.pnpm-store,target=/root/.pnpm-store \
+#   pnpm i --frozen-lockfile --prod --offline
+# COPY --from=internal-api-builder /monorepo/shared/lib/dist shared/lib/dist
+# COPY --from=internal-api-builder /monorepo/apps/internal-api/dist apps/internal-api/dist
+# WORKDIR /monorepo/apps/internal-api
+# CMD ["node", "dist/main"]
