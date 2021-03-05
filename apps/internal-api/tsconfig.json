@@ -4,11 +4,15 @@
     "baseUrl": "./",
     "paths": {
       "src": ["./src"],
-      "test": ["./test"]
+      "test": ["./test"],
+      "@my/lib": ["../../shared/lib/src"],
     }
   },
   "include": [
     "./src",
     "./test"
+  ],
+  "references": [
+    { "path": "../../shared/lib" }
   ]
 }
