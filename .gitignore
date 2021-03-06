@@ -1,5 +1,5 @@
 **/dist
 **/node_modules
-.buildkit-cache
-*pnpm-lock.yaml
-lol
+buildkit*
+Dockerfile.1
+Dockerfile.2
