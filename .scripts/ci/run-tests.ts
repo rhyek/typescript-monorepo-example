@@ -1,6 +1,91 @@
 #!/usr/bin/env ts-node-transpile-only
-import { findChangedPackages } from './common/find-changed-packages';
+import {
+  findChangedPackages,
+  FindChangePackagesOptions,
+} from './common/find-changed-packages';
+import { findPackages } from './common/find-packages';
 import { pnpmRun } from './common/pnpm-helpers';
+
+const config = {
+  unit: [
+    {
+      // any shared package who's own files changed
+      parentDir: 'shared',
+      diffInclude: [/tsconfig/, /\/package\.json/, /\bjest\b/, /src\/.+\.ts$/],
+      diffExclude: [/test\/jest\b/],
+    },
+    {
+      // any shared package and its dependents who's own files changed except test files
+      parentDir: 'shared',
+      excludeSelf: true,
+      includeDependents: true,
+      diffInclude: [
+        /tsconfig\.(build\.)?json/,
+        /\/package\.json/,
+        /src\/.+\.ts$/,
+      ],
+      diffExclude: [/\.spec\.ts$/],
+    },
+    {
+      // any app package who's own files changed
+      parentDir: 'apps',
+      diffInclude: [/tsconfig/, /\/package\.json/, /\bjest\b/, /src\/.+\.ts$/],
+      diffExclude: [/test\/jest\b/],
+    },
+  ],
+  e2e: [
+    {
+      // any shared package and its dependents who's own files changed except test files
+      parentDir: 'shared',
+      excludeSelf: true,
+      includeDependents: true,
+      diffInclude: [
+        /tsconfig\.(build\.)?json/,
+        /\/package\.json/,
+        /src\/.+\.ts$/,
+      ],
+      diffExclude: [/\.spec\.ts$/],
+    },
+    {
+      // any app package who's own files changed
+      parentDir: 'apps',
+      diffInclude: [
+        /tsconfig\.((build|test-e2e)\.)?json/,
+        /\/package\.json/,
+        /\bjest\b/,
+        /\/test\//,
+        /src\/.+\.ts$/,
+      ],
+      diffExclude: [/\.spec\.ts$/],
+    },
+  ],
+};
+
+export async function getPackagesToTest(
+  testType: 'unit' | 'e2e',
+  options?: FindChangePackagesOptions,
+) {
+  const packages = await findChangedPackages(config[testType], options);
+  return packages;
+}
+
+export async function getLibsToPrebuild(
+  testType: 'unit' | 'e2e',
+  options?: FindChangePackagesOptions,
+) {
+  const packagesToTest = await getPackagesToTest(testType, options);
+  if (packagesToTest.length > 0) {
+    const libsToPrebuild = await findPackages(
+      packagesToTest.map((packageName) => ({
+        namePattern: packageName,
+        excludeSelf: true,
+        includeDependencies: true,
+      })),
+    );
+    return libsToPrebuild;
+  }
+  return [];
+}
 
 /**
  * gather all shared packages that need to be built and build them first.
@@ -15,42 +100,9 @@ export async function main(testType: 'unit' | 'e2e') {
     throw new Error(`Invalid test type: ${testType}.`);
   }
   console.log(`Running ${testType} tests.`.cyan.bold);
-  const appsConfig = {
-    // any app package who's own files changed
-    parentDir: 'apps',
-    diffInclude: [/tsconfig/, /\/package\.json/, /\bjest\b/, /\.ts$/],
-    diffExclude: testType === 'unit' ? /\.e2e-spec\.ts$/ : /\.spec\.ts$/,
-  };
-  const libs = await findChangedPackages([
-    {
-      parentDir: 'shared',
-      diffInclude: [/tsconfig/, /\/package\.json/, /\.ts$/],
-      diffExclude: /\.(e2e-)?spec\.ts$/,
-    },
-    {
-      ...appsConfig,
-      excludeSelf: true,
-      includeDependencies: true,
-    },
-  ]);
+  const libs = await getLibsToPrebuild(testType);
   await pnpmRun('build', libs, true);
-  const all = await findChangedPackages([
-    {
-      // any shared package who's own files changed
-      parentDir: 'shared',
-      diffInclude: [/tsconfig/, /\/package\.json/, /\bjest\b/, /\.ts$/],
-      diffExclude: testType === 'unit' ? /\.e2e-spec\.ts$/ : /\.spec\.ts$/,
-    },
-    {
-      // any shared package and its dependents who's own files changed except test files
-      parentDir: 'shared',
-      excludeSelf: true,
-      includeDependents: true,
-      diffInclude: [/tsconfig\.(build\.)?json/, /\/package\.json/, /\.ts$/],
-      diffExclude: /\.(e2e-)?spec\.ts$/,
-    },
-    appsConfig,
-  ]);
+  const all = await getPackagesToTest(testType);
   await pnpmRun(`test:${testType}`, all);
 }
 
