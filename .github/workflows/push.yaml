@@ -56,6 +56,7 @@ jobs:
         include:
           - name: web-api
             heroku_app_key: WEB_API_APP
+          - name: internal-api
     steps:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
@@ -84,9 +85,13 @@ jobs:
         run: >-
           echo ${{ secrets.HEROKU_API_KEY }} | docker login registry.heroku.com
           --username=_ --password-stdin
-        if: steps.image-exists.outputs.result == 'true'
+        if: >-
+          steps.image-exists.outputs.result == 'true' && matrix.heroku_app_key
+          != ''
       - name: Tag and push to heroku
-        if: steps.image-exists.outputs.result == 'true'
+        if: >-
+          steps.image-exists.outputs.result == 'true' && matrix.heroku_app_key
+          != ''
         run: >
           docker tag ${{ steps.image-names.outputs.github }}:${{
           needs.pr-number.outputs.result }} ${{ steps.image-names.outputs.heroku

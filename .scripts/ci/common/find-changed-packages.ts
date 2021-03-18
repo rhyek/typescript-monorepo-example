@@ -34,7 +34,7 @@ function changedBasedOnDiffFiles(
 ) {
   for (const diffFile of diffFiles) {
     if (
-      (/^[^/]+$/.exec(diffFile) || diffFile.startsWith(packageBaseDir)) &&
+      (!diffFile.includes('/') || diffFile.startsWith(packageBaseDir)) &&
       (diffInclude.length === 0 ||
         diffInclude.some((regex) => regex.exec(diffFile))) &&
       diffExclude.every((regex) => !regex.exec(diffFile))
@@ -68,8 +68,8 @@ const readProjects = mem((workspaceDir: string) => {
 
 async function filterProjects(
   workspaceDir: string,
-  diffFiles: string[],
-  refLockfileDir: string,
+  diffFiles: string[] | false,
+  refLockfileDir: string | false,
   selectors: Selector[],
 ) {
   const matchedPackages: PackageGraph<Project> = {};
@@ -104,17 +104,21 @@ async function filterProjects(
           throw new Error(`Package at ${packageBaseDir} is missing a name.`);
         }
         const changed =
-          changedBasedOnDiffFiles(
-            packageBaseDir,
-            diffFiles,
-            diffInclude,
-            diffExclude,
-          ) ||
-          (await changedBasedOnLockfileDiff(
-            workspaceDir,
-            refLockfileDir,
-            packageName,
-          ));
+          (diffFiles === false
+            ? false
+            : changedBasedOnDiffFiles(
+                packageBaseDir,
+                diffFiles,
+                diffInclude,
+                diffExclude,
+              )) ||
+          (refLockfileDir === false
+            ? false
+            : await changedBasedOnLockfileDiff(
+                workspaceDir,
+                refLockfileDir,
+                packageName,
+              ));
         if (changed) {
           const { selectedProjectsGraph } = await filterPkgsBySelectorObjects(
             allProjects,
@@ -148,17 +152,11 @@ const getTargetComparisonGitRef = mem(async () => {
   return commit;
 });
 
-const getDiffFiles = mem(
-  async (comparisonRef: string, workspaceDir: string) => {
-    const { stdout } = await execa('git', [
-      'diff',
-      '--name-only',
-      comparisonRef,
-    ]);
-    const files = stdout.split('\n');
-    return files;
-  },
-);
+const getDiffFiles = mem(async (comparisonRef: string) => {
+  const { stdout } = await execa('git', ['diff', '--name-only', comparisonRef]);
+  const files = stdout.split('\n');
+  return files;
+});
 
 const generateLockfileFromRef = mem(async (ref: string) => {
   const tempDir = tempy.directory();
@@ -203,16 +201,29 @@ function logResult(packageNames: string[]) {
   }
 }
 
-export async function findChangedPackages(selectors: Selector[]) {
+export interface FindChangePackagesOptions {
+  useDiffFiles?: boolean;
+  diffFiles?: string[];
+  useLockFile?: boolean;
+}
+
+export async function findChangedPackages(
+  selectors: Selector[],
+  options?: FindChangePackagesOptions,
+) {
   const comparisonRef = await getTargetComparisonGitRef();
+  const {
+    useDiffFiles = true,
+    diffFiles = await getDiffFiles(comparisonRef),
+    useLockFile = true,
+  } = options ?? {};
   logParams(selectors, comparisonRef);
   const workspaceDir = await findWorkspaceDir();
-  const diffFiles = await getDiffFiles(comparisonRef, workspaceDir);
   const refLockfile = await generateLockfileFromRef(comparisonRef);
   const graph = await filterProjects(
     workspaceDir,
-    diffFiles,
-    refLockfile.dir,
+    useDiffFiles ? diffFiles : false,
+    useLockFile ? refLockfile.dir : false,
     selectors,
   );
   const packageNames = Object.values(graph).map(
