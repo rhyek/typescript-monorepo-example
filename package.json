@@ -2,10 +2,11 @@
   "name": "typescript-monorepo",
   "private": true,
   "scripts": {
-    "dev": "pnpm exec --parallel --filter \"{apps}^...\" -- pnpx ttsc -b tsconfig.build.json && pnpm run dev --parallel --filter {apps}",
-    "lint": "pnpm run lint --parallel --filter {apps} --filter {shared}",
-    "test:unit": "pnpm run test:unit --parallel --filter {apps} --filter {shared}",
-    "test:e2e": "pnpm run test:e2e --parallel --filter {apps}"
+    "build:libs": "pnpm run --parallel --filter \"{apps}^...\" build",
+    "dev": "pnpm build:libs && pnpm run --parallel --filter {apps} dev",
+    "lint": "pnpm build:libs && pnpm run --parallel --filter {apps} --filter {shared} lint",
+    "test:unit": "pnpm build:libs && pnpm run --parallel --filter {apps} --filter {shared} test:unit",
+    "test:e2e": "pnpm build:libs && pnpm run --parallel --filter {apps} test:e2e"
   },
   "husky": {
     "hooks": {
