@@ -16,13 +16,13 @@ The perfect typescript monorepo.
 - non-relative paths for all imports
 - path alias replacement during compilation based on configured tsconfig paths using ttypescript, and [typescript-transform-paths](https://github.com/LeDDGroup/typescript-transform-paths)
 
-## Bonus
+### Bonus
 
 - Integration tests per SUT (system under test) each with its own docker-compose definition for dependencies (external or internal)
 - Includes CI/CD pipelines for Github Actions (currently deploying to Heroku)
 - Docker images built for integration tests are also used for production
 
-## Pending
+### Pending
 
 - Use multi-stage docker builds for CI/CD
 
