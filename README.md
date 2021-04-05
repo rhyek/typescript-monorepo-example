@@ -20,11 +20,8 @@ The perfect typescript monorepo.
 
 - Integration tests per SUT (system under test) each with its own docker-compose definition for dependencies (external or internal)
 - Includes CI/CD pipelines for Github Actions (currently deploying to Heroku)
+- Docker images built using multi-stage
 - Docker images built for integration tests are also used for production
-
-### Pending
-
-- Use multi-stage docker builds for CI/CD
 
 ## Getting Started
 

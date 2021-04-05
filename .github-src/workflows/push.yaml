@@ -89,7 +89,7 @@ jobs:
         id: push-to-ghcr
         if: steps.image-exists.outputs.result == 'true'
         run: |
-          DOCKER_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}
           IMAGE_NAME=${{ steps.image-names.outputs.github }}
           PACKAGES_PATH_PREFIX=${{ env.PACKAGES_PATH_PREFIX }}
           PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}
