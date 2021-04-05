@@ -57,7 +57,10 @@ const changedBasedOnLockfileDiff = mem(
       packageName,
       false,
     );
-    return current.content !== old.content;
+    const changed =
+      (current === null) !== (old === null) ||
+      (current !== null && old !== null && current.content !== old.content);
+    return changed;
   },
   { cacheKey: (args) => args.join(',') },
 );
@@ -205,6 +208,7 @@ export interface FindChangePackagesOptions {
   useDiffFiles?: boolean;
   diffFiles?: string[];
   useLockFile?: boolean;
+  onlyPackages?: string[];
 }
 
 export async function findChangedPackages(
@@ -216,6 +220,7 @@ export async function findChangedPackages(
     useDiffFiles = true,
     diffFiles = await getDiffFiles(comparisonRef),
     useLockFile = true,
+    onlyPackages,
   } = options ?? {};
   logParams(selectors, comparisonRef);
   const workspaceDir = await findWorkspaceDir();
@@ -226,9 +231,13 @@ export async function findChangedPackages(
     useLockFile ? refLockfile.dir : false,
     selectors,
   );
-  const packageNames = Object.values(graph).map(
-    (node) => node.package.manifest.name!,
-  );
+  const packageNames = Object.values(graph)
+    .map((node) => node.package.manifest.name!)
+    .filter(
+      (packageName) =>
+        typeof onlyPackages === 'undefined' ||
+        onlyPackages.includes(packageName),
+    );
   logResult(packageNames);
   return packageNames;
 }

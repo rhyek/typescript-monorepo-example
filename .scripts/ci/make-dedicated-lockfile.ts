@@ -2,6 +2,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import yargs from 'yargs';
+import execa from 'execa';
 import { findWorkspaceDir } from './common/pnpm-helpers';
 import { lockfileName } from './common/consts';
 import { makeDedicatedLockfileForPackage } from './common/dedicated-lockfile';
@@ -20,40 +21,36 @@ yargs(process.argv.slice(2))
           type: 'string',
           describe: 'path to the new lockfile',
         })
-        .option('replace', {
-          type: 'boolean',
-          alias: 'r',
-          describe: 'replace the workspace lockfile',
-        })
-        .conflicts('outFile', 'replace')
         .version(false)
-        .help()
-        .check((argv) => {
-          if (!argv.outFile && !argv.replace) {
-            throw new Error(
-              'Please specify either an outfile or the --replace option',
-            );
-          }
-          return true;
-        });
+        .help();
     },
     async (argv) => {
       const { package: packageName } = (argv as unknown) as { package: string };
       let { outFile } = argv as { outFile?: string };
       if (!outFile) {
-        outFile = lockfileName;
+        const { stdout: pkgPath } = await execa('pnpm', [
+          'exec',
+          '--filter',
+          packageName,
+          'pwd',
+        ]);
+        outFile = path.resolve(pkgPath, lockfileName);
       }
       if (!path.isAbsolute(outFile)) {
         outFile = path.resolve(process.cwd(), outFile);
       }
       const workspaceDir = await findWorkspaceDir();
-      const { content } = await makeDedicatedLockfileForPackage(
+      const result = await makeDedicatedLockfileForPackage(
         workspaceDir,
         packageName,
         true,
       );
+      if (result === null) {
+        throw new Error('No lockfile generated.');
+      }
+      const { content } = result;
       await fs.writeFile(outFile, content, { encoding: 'utf8' });
-      console.log(`Created ${outFile}.`);
+      console.log(`Created ${outFile}`);
     },
   )
   .parse();

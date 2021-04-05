@@ -32,7 +32,7 @@ async function main() {
     while ((match = srcContent.match(includeRegex))) {
       const [matchedString, spaces, includePath] = match;
       const { index } = match;
-      const realPath = includePath.match(/\.ya?ml$/)
+      const realPath = path.basename(includePath).includes('.')
         ? includePath
         : `${includePath}.yaml`;
       const includeContent = (

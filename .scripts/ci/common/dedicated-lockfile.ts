@@ -43,15 +43,20 @@ export async function makeDedicatedLockfileForPackage(
     }
   }
   const dedicatedLockfile = pruneSharedLockfile(lockfile);
-  const tempDir = tempy.directory();
-  await writeWantedLockfile(tempDir, dedicatedLockfile);
-  const dedicatedLockfilePath = path.resolve(tempDir, lockfileName);
-  const dedicatedLockfileContent = await fs.readFile(dedicatedLockfilePath, {
-    encoding: 'utf8',
-  });
-  await fs.rm(dedicatedLockfilePath);
+  if (Object.keys(dedicatedLockfile.importers).length === 0) {
+    console.error(`Dedicated lockfile for package ${forPackageName} is empty.`);
+    return null;
+  } else {
+    const tempDir = tempy.directory();
+    await writeWantedLockfile(tempDir, dedicatedLockfile);
+    const dedicatedLockfilePath = path.resolve(tempDir, lockfileName);
+    const dedicatedLockfileContent = await fs.readFile(dedicatedLockfilePath, {
+      encoding: 'utf8',
+    });
+    await fs.rm(dedicatedLockfilePath);
 
-  return {
-    content: dedicatedLockfileContent,
-  };
+    return {
+      content: dedicatedLockfileContent,
+    };
+  }
 }

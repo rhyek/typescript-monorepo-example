@@ -1,38 +1,33 @@
-FROM node:14-alpine
-
+FROM node:15-alpine as builder
+# dependencies
 RUN npm i -g pnpm
-
 WORKDIR /monorepo
-
-COPY pnpm-*.yaml ./
-COPY shared/lib/package.json /monorepo/shared/lib/
-COPY apps/internal-api/package.json /monorepo/apps/internal-api/
+COPY pnpm-workspace.yaml ./
+COPY apps/internal-api/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY shared/lib/package.json shared/lib/
+COPY apps/internal-api/package.json apps/internal-api/
 RUN pnpm i --frozen-lockfile --prod
-
+# build
 COPY tsconfig.json ./
-
-COPY shared/lib/tsconfig.json shared/lib/tsconfig.build.json /monorepo/shared/lib/
-COPY shared/lib/src /monorepo/shared/lib/src
-
-COPY apps/internal-api/tsconfig.json apps/internal-api/tsconfig.build.json /monorepo/apps/internal-api/
-COPY apps/internal-api/src /monorepo/apps/internal-api/src
-
+COPY shared/lib/tsconfig.json shared/lib/tsconfig.build.json shared/lib/
+COPY shared/lib/src shared/lib/src
+COPY apps/internal-api/tsconfig.json apps/internal-api/tsconfig.build.json apps/internal-api/
+COPY apps/internal-api/src apps/internal-api/src
 WORKDIR /monorepo/apps/internal-api
-
 RUN pnpm build
 
+FROM node:15-alpine
+# prod dependencies
+RUN npm i -g pnpm
+WORKDIR /monorepo
+COPY pnpm-workspace.yaml ./
+COPY apps/internal-api/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY shared/lib/package.json shared/lib/
+COPY apps/internal-api/package.json apps/internal-api/
+RUN pnpm i --frozen-lockfile --prod --no-optional
+# copy build
+COPY --from=builder /monorepo/shared/lib/dist shared/lib/dist
+COPY --from=builder /monorepo/apps/internal-api/dist apps/internal-api/dist
+WORKDIR /monorepo/apps/internal-api
+# run
 CMD ["pnpm", "start:prod"]
-
-# in monorepo root
-# docker build -t internal-api:latest -f ./src/internal-api/Dockerfile .
-# docker build -t internal-api:latest -f ./Dockerfile ../../
-# docker run --rm -it \
-#   -e PORT=3001 \
-#   -e MSG=hi \
-#   -p 3001:3001 \
-#   internal-api:latest
-
-
-# DOCKER_BUILDKIT=1 docker build -t rhyek/typescript-monorepo-internal-api:latest -f ./src/internal-api/Dockerfile . --cache-from=rhyek/typescript-monorepo-internal-api:latest --build-arg BUILDKIT_INLINE_CACHE=1
-# docker push rhyek/typescript-monorepo-internal-api:latest
-# docker rmi rhyek/typescript-monorepo-internal-api:latest

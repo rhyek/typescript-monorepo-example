@@ -73,39 +73,43 @@ jobs:
       - name: Build docker image
         if: steps.needs-build.outputs.result == 'true'
         run: |
+          DOCKER_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          IMAGE_NAME=${{ env.IMAGE }}
+          PACKAGES_PATH_PREFIX=${{ env.PACKAGES_PATH_PREFIX }}
           PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          APP_PATH=${{ matrix.path }}
+
           docker -v
           docker buildx version
-          .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
-          OLD_PR_IMAGE_ID=$(curl -s \
-            -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
-            -H 'Accept: application/vnd.github.v3+json' \
-            "https://api.github.com/${{ env.PACKAGES_PATH_PREFIX }}/packages/container/$PACKAGE_NAME/versions" \
-            | jq -rM 'first(.[] | select(.metadata.container.tags | index("${{ github.event.pull_request.number }}"))).id // null' \
-            || echo null
-          )
+
+          .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }}
+
+          !include(../includes/image_helpers.sh)
+
+          OLD_PR_IMAGE_ID=$(get_image_id $PACKAGE_NAME $PR_NUMBER)
+          OLD_PR_CACHE_IMAGE_ID=$(get_image_id "$PACKAGE_NAME-cache" $PR_NUMBER)
+
           docker buildx build \
-            --cache-from=${{ env.IMAGE }}:latest \
-            --cache-from=${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
-            --cache-to=type=inline \
-            -t ${{ env.IMAGE }}:${{ github.event.pull_request.number }} \
-            -f ${{ matrix.path }}/Dockerfile \
+            --cache-from="type=registry,ref=$IMAGE_NAME-cache:latest" \
+            --cache-from="type=registry,ref=$IMAGE_NAME-cache:$PR_NUMBER" \
+            --cache-to="type=registry,ref=$IMAGE_NAME-cache:$PR_NUMBER" \
+            -t "$IMAGE_NAME:$PR_NUMBER" \
+            -f "$APP_PATH/Dockerfile" \
             --push \
             .
-          NEW_PR_IMAGE_ID=$(curl -s \
-            -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
-            -H 'Accept: application/vnd.github.v3+json' \
-            "https://api.github.com/${{ env.PACKAGES_PATH_PREFIX }}/packages/container/$PACKAGE_NAME/versions" \
-            | jq -rM 'first(.[] | select(.metadata.container.tags | index("${{ github.event.pull_request.number }}"))).id // null' \
-            || echo null
-          )
+
+          NEW_PR_IMAGE_ID=$(get_image_id $PACKAGE_NAME $PR_NUMBER)
+          NEW_PR_CACHE_IMAGE_ID=$(get_image_id "$PACKAGE_NAME-cache" $PR_NUMBER)
+
           if [ "$OLD_PR_IMAGE_ID" != 'null' ] && [ "$OLD_PR_IMAGE_ID" != "$NEW_PR_IMAGE_ID" ]; then
-            curl -i \
-              -X DELETE \
-              -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/${{ env.PACKAGES_PATH_PREFIX }}/packages/container/$PACKAGE_NAME/versions/$OLD_PR_IMAGE_ID"
-            echo "Deleted old PR image with id $OLD_PR_IMAGE_ID"
+            delete_image $PACKAGE_NAME $OLD_PR_IMAGE_ID
+            echo "Deleted old PR image for package $PACKAGE_NAME with id $OLD_PR_IMAGE_ID"
+          fi
+
+          if [ "$OLD_PR_CACHE_IMAGE_ID" != 'null' ] && [ "$OLD_PR_CACHE_IMAGE_ID" != "$NEW_PR_CACHE_IMAGE_ID" ]; then
+            delete_image $PACKAGE_NAME $OLD_PR_CACHE_IMAGE_ID
+            echo "Deleted old PR image cache for package $PACKAGE_NAME with id $OLD_PR_CACHE_IMAGE_ID"
           fi
   integration-tests:
     name: Integration Tests
