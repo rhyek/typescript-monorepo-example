@@ -80,6 +80,8 @@ jobs:
           PR_NUMBER=${{ github.event.pull_request.number }}
           APP_PATH=${{ matrix.path }}
 
+          echo "hi $PR_NUMBER"
+
           docker -v
           docker buildx version
 
