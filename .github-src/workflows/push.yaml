@@ -95,6 +95,8 @@ jobs:
           PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}
           PR_NUMBER=${{ needs.pr-number.outputs.result }}
 
+          echo "hi $PR_NUMBER"
+
           !include(../includes/image_helpers.sh)
 
           re_tag_and_delete_old () {
