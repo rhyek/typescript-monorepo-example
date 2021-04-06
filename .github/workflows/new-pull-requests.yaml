@@ -91,7 +91,7 @@ jobs:
       - name: Build docker image
         if: steps.needs-build.outputs.result == 'true'
         run: >
-          DOCKER_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}
 
           IMAGE_NAME=${{ env.IMAGE }}
 
