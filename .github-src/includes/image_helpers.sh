@@ -9,7 +9,7 @@ get_image_id () {
   code=$(curl -s \
     --output out.txt \
     --write-out "%{http_code}" \
-    -H "Authorization: Bearer $DOCKER_TOKEN" \
+    -H "Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}" \
     -H 'Accept: application/vnd.github.v3+json' \
     "https://api.github.com/$PACKAGES_PATH_PREFIX/packages/container/$PACKAGE_NAME/versions"
   )
@@ -20,6 +20,7 @@ get_image_id () {
       echo 'null'
       return 0
     else
+      echo "http status: $code"
       cat out.txt
       kill -s TERM $TOP_PID
     fi
@@ -32,7 +33,7 @@ delete_image () {
 
   curl -i \
     -X DELETE \
-    -H "Authorization: Bearer $DOCKER_TOKEN" \
+    -H "Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}" \
     -H "Accept: application/vnd.github.v3+json" \
     "https://api.github.com/$PACKAGES_PATH_PREFIX/packages/container/$PACKAGE_NAME/versions/$IMAGE_ID"
 }
