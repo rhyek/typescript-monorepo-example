@@ -1,6 +1,6 @@
 docker-login: &docker-login
   name: Docker login
-  run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
+  run: echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek --password-stdin
 pnpm-store-cache: &pnpm-store-cache
   name: Cache pnpm store
   uses: actions/cache@v2
