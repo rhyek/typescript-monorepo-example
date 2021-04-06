@@ -102,7 +102,7 @@ jobs:
         id: push-to-ghcr
         if: steps.image-exists.outputs.result == 'true'
         run: >
-          DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}
+          DOCKER_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
           IMAGE_NAME=${{ steps.image-names.outputs.github }}
 
