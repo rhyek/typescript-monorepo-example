@@ -5,6 +5,7 @@ name: Tests and Build
       - main
 env:
   PACKAGES_PATH_PREFIX: user
+  DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
 jobs:
   lint-unit-tests:
     name: Lint and Unit Tests
@@ -69,7 +70,7 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
         run: >-
-          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
+          echo ${{ env.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
           --password-stdin
       - name: Set image name
         run: >-
@@ -91,7 +92,7 @@ jobs:
       - name: Build docker image
         if: steps.needs-build.outputs.result == 'true'
         run: >
-          DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}
+          DOCKER_TOKEN=${{ env.DOCKER_TOKEN }}
 
           IMAGE_NAME=${{ env.IMAGE }}
 
@@ -209,7 +210,7 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
         run: >-
-          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
+          echo ${{ env.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
           --password-stdin
       - name: Should run tests?
         id: should-run

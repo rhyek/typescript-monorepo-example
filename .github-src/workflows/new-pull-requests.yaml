@@ -73,7 +73,7 @@ jobs:
       - name: Build docker image
         if: steps.needs-build.outputs.result == 'true'
         run: |
-          DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}
+          DOCKER_TOKEN=${{ env.DOCKER_TOKEN }}
           IMAGE_NAME=${{ env.IMAGE }}
           PACKAGES_PATH_PREFIX=${{ env.PACKAGES_PATH_PREFIX }}
           PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}
