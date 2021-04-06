@@ -69,8 +69,8 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
         run: >-
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{
-          github.actor }} --password-stdin
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
+          --password-stdin
       - name: Set image name
         run: >-
           echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG
@@ -209,8 +209,8 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
         run: >-
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{
-          github.actor }} --password-stdin
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
+          --password-stdin
       - name: Should run tests?
         id: should-run
         env:
