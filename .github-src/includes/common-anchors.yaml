@@ -9,6 +9,10 @@ pnpm-store-cache: &pnpm-store-cache
     key: ${{ runner.os }}-pnpmstore-${{ hashFiles('**/pnpm-lock.yaml') }}
     restore-keys: |
       ${{ runner.os }}-pnpmstore-
+setup-node: &setup-node
+  - uses: actions/setup-node@v2
+    with:
+      node-version: '14.15.4'
 setup-pnpm: &setup-pnpm
   - name: Setup pnpm
     uses: pnpm/action-setup@v1.2.1

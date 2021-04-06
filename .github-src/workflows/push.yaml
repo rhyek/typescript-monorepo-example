@@ -42,6 +42,7 @@ jobs:
             || echo null
           )
           echo "::set-output name=result::$NUMBER"
+
   pnpm-store-cache: # https://docs.github.com/en/actions/guides/caching-dependencies-to-speed-up-workflows#restrictions-for-accessing-a-cache
     name: Create pnpm store cache for future PRs
     runs-on: ubuntu-20.04
@@ -52,6 +53,7 @@ jobs:
       - <<: *pnpm-store-cache
       - *setup-pnpm
       - run: pnpm i --frozen-lockfile
+
   publish-for-pr:
     name: Publish images for merged PR
     runs-on: ubuntu-20.04
@@ -64,6 +66,7 @@ jobs:
             heroku_app_key: WEB_API_APP
           - name: internal-api
     steps:
+      - *setup-node
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - name: Set image names
@@ -172,9 +175,7 @@ jobs:
     needs: [publish-for-pr, publish-for-push]
     if: always() && (needs.publish-for-pr.result == 'success' || needs.publish-for-push.result == 'success')
     steps:
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '14.15.4'
+      - *setup-node
       - run: curl -s https://cli-assets.heroku.com/install.sh | sh
       - run: heroku container:login
       - run: heroku container:release web --app=$WEB_API_APP
