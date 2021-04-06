@@ -62,7 +62,7 @@ jobs:
         run: |
           NEEDS_BUILD=$(.scripts/ci/needs-build.ts ${{ matrix.package-name }})
           if [ "$NEEDS_BUILD" == "false" ]; then
-            docker manifest inspect ${{ env.IMAGE }}:latest && EXIT_CODE=0 || EXIT_CODE=$?
+            docker buildx imagetools inspect ${{ env.IMAGE }}:latest && EXIT_CODE=0 || EXIT_CODE=$?
             if [ $EXIT_CODE != 0 ]; then
               NEEDS_BUILD="true"
             fi
