@@ -89,28 +89,43 @@ jobs:
         id: push-to-ghcr
         if: steps.image-exists.outputs.result == 'true'
         run: |
+          DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}
+          IMAGE_NAME=${{ steps.image-names.outputs.github }}
+          PACKAGES_PATH_PREFIX=${{ env.PACKAGES_PATH_PREFIX }}
           PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}
-          OLD_LATEST_IMAGE_ID=$(curl -s \
-            -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
-            -H 'Accept: application/vnd.github.v3+json' \
-            "https://api.github.com/${{ env.PACKAGES_PATH_PREFIX }}/packages/container/$PACKAGE_NAME/versions" \
-            | jq -rM 'first(.[] | select(.metadata.container.tags | index("latest"))).id // null' \
-            || echo null
-          )
-          echo "OLD_LATEST_IMAGE_ID: $OLD_LATEST_IMAGE_ID"
-          docker tag ${{ steps.image-names.outputs.github }}:${{ needs.pr-number.outputs.result }} ${{ steps.image-names.outputs.github }}:latest
-          docker push ${{ steps.image-names.outputs.github }}:latest
+          PR_NUMBER=${{ needs.pr-number.outputs.result }}
 
-          echo "::set-output name=package-name::$PACKAGE_NAME"
-          echo "::set-output name=old-latest-image-id::$OLD_LATEST_IMAGE_ID"
-      - name: Delete old 'latest' image
-        if: steps.image-exists.outputs.result == 'true' && steps.push-to-ghcr.outputs.old-latest-image-id != 'null'
-        run: |
-          curl -i \
-            -X DELETE \
-            -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/${{ env.PACKAGES_PATH_PREFIX }}/packages/container/${{ steps.push-to-ghcr.outputs.package-name }}/versions/${{ steps.push-to-ghcr.outputs.old-latest-image-id }}
+          echo "hi $PR_NUMBER"
+
+          !include(../includes/image_helpers.sh)
+
+          re_tag_and_delete_old () {
+            local IMAGE_NAME=$1
+            local PACKAGE_NAME=$2
+            local TAG=$3
+
+            docker buildx imagetools inspect "$IMAGE_NAME:$TAG" &> /dev/null && EXIT_CODE=0 || EXIT_CODE=$?
+
+            if [ $EXIT_CODE = 0 ]; then
+              BUILT_IMAGE_ID=$(get_image_id $PACKAGE_NAME $TAG)
+              OLD_LATEST_IMAGE_ID=$(get_image_id $PACKAGE_NAME 'latest')
+
+              docker buildx imagetools create -t "$IMAGE_NAME:latest" "$IMAGE_NAME:$TAG"
+
+              NEW_LATEST_IMAGE_ID=$(get_image_id $PACKAGE_NAME 'latest')
+              if [ "$BUILT_IMAGE_ID" != 'null' ] && [ "$BUILT_IMAGE_ID" != "$NEW_LATEST_IMAGE_ID" ]; then
+                delete_image $PACKAGE_NAME $BUILT_IMAGE_ID
+                echo "Deleted old image with id $BUILT_IMAGE_ID"
+              fi
+              if [ "$OLD_LATEST_IMAGE_ID" != 'null' ] && [ "$OLD_LATEST_IMAGE_ID" != "$NEW_LATEST_IMAGE_ID" ]; then
+                delete_image $PACKAGE_NAME $OLD_LATEST_IMAGE_ID
+                echo "Deleted old latest image with id $OLD_LATEST_IMAGE_ID"
+              fi
+            fi
+          }
+
+          re_tag_and_delete_old $IMAGE_NAME $PACKAGE_NAME $PR_NUMBER
+          re_tag_and_delete_old "${IMAGE_NAME}-cache" "${PACKAGE_NAME}-cache" $PR_NUMBER
       - <<: *report
   publish-for-push:
     name: Publish images for direct push

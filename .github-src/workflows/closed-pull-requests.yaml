@@ -23,21 +23,25 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Delete PR image if exists
         run: |
+          DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}
+          PACKAGES_PATH_PREFIX=${{ env.PACKAGES_PATH_PREFIX }}
           PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}
-          IMAGE_ID=$(curl -s \
-            -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
-            -H 'Accept: application/vnd.github.v3+json' \
-            "https://api.github.com/${{ env.PACKAGES_PATH_PREFIX }}/packages/container/$PACKAGE_NAME/versions" \
-            | jq -rM 'first(.[] | select(.metadata.container.tags | index("${{ github.event.pull_request.number }}"))).id // null' \
-            || echo null
-          )
-          if [ "$IMAGE_ID" != 'null' ]; then
-            curl -i \
-              -X DELETE \
-              -H 'Authorization: Bearer ${{ secrets.DOCKER_TOKEN }}' \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/${{ env.PACKAGES_PATH_PREFIX }}/packages/container/$PACKAGE_NAME/versions/$IMAGE_ID"
-            echo "Image id $IMAGE_ID with tag ${{ github.event.pull_request.number }} deleted"
-          else
-            echo "Image id not found"
-          fi
+          PR_NUMBER=${{ github.event.pull_request.number }}
+
+          !include(../includes/image_helpers.sh)
+
+          find_and_delete_image () {
+            local PACKAGE_NAME=$1
+            local TAG=$2
+
+            IMAGE_ID=$(get_image_id $PACKAGE_NAME $TAG)
+            if [ "$IMAGE_ID" != 'null' ]; then
+              delete_image $PACKAGE_NAME $IMAGE_ID
+              echo "Deleted $PACKAGE_NAME:$TAG with image id $IMAGE_ID"
+            else
+              echo "Image $PACKAGE_NAME:$TAG not found"
+            fi
+          }
+
+          find_and_delete_image $PACKAGE_NAME $PR_NUMBER
+          find_and_delete_image "${PACKAGE_NAME}-cache" $PR_NUMBER

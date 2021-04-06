@@ -3,3 +3,8 @@
 buildkit*
 Dockerfile.1
 Dockerfile.2
+token
+dockerhub-token
+.pnpm-debug.log
+**/pnpm-lock.yaml
+out.txt
