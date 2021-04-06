@@ -5,6 +5,7 @@ name: Publish and Deploy
       - main
 env:
   PACKAGES_PATH_PREFIX: user
+  DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
   WEB_API_APP: typescript-monorepo
 jobs:
@@ -70,7 +71,7 @@ jobs:
           env[matrix.heroku_app_key] }}/web"
       - name: Docker login
         run: >-
-          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
+          echo ${{ env.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
           --password-stdin
       - name: Check if image for PR exists
         id: image-exists
@@ -102,7 +103,7 @@ jobs:
         id: push-to-ghcr
         if: steps.image-exists.outputs.result == 'true'
         run: >
-          DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}
+          DOCKER_TOKEN=${{ env.DOCKER_TOKEN }}
 
           IMAGE_NAME=${{ steps.image-names.outputs.github }}
 
@@ -212,7 +213,7 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
         run: >-
-          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
+          echo ${{ env.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
           --password-stdin
       - name: Heroku Docker login
         run: >-
