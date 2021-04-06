@@ -69,8 +69,8 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
         run: >-
-          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
-          --password-stdin
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{
+          github.actor }} --password-stdin
       - name: Set image name
         run: >-
           echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG
@@ -91,7 +91,7 @@ jobs:
       - name: Build docker image
         if: steps.needs-build.outputs.result == 'true'
         run: >
-          DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}
+          DOCKER_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
           IMAGE_NAME=${{ env.IMAGE }}
 
@@ -209,8 +209,8 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
         run: >-
-          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
-          --password-stdin
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{
+          github.actor }} --password-stdin
       - name: Should run tests?
         id: should-run
         env:

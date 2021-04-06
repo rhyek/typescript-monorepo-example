@@ -70,8 +70,8 @@ jobs:
           env[matrix.heroku_app_key] }}/web"
       - name: Docker login
         run: >-
-          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
-          --password-stdin
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{
+          github.actor }} --password-stdin
       - name: Check if image for PR exists
         id: image-exists
         run: >
@@ -102,7 +102,7 @@ jobs:
         id: push-to-ghcr
         if: steps.image-exists.outputs.result == 'true'
         run: >
-          DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}
+          DOCKER_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
           IMAGE_NAME=${{ steps.image-names.outputs.github }}
 
@@ -212,8 +212,8 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
         run: >-
-          echo ${{ secrets.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
-          --password-stdin
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{
+          github.actor }} --password-stdin
       - name: Heroku Docker login
         run: >-
           echo ${{ secrets.HEROKU_API_KEY }} | docker login registry.heroku.com

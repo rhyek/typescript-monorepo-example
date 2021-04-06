@@ -22,7 +22,7 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Delete PR image if exists
         run: >
-          DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}
+          DOCKER_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
           PACKAGES_PATH_PREFIX=${{ env.PACKAGES_PATH_PREFIX }}
 
