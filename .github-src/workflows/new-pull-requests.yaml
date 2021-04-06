@@ -29,6 +29,7 @@ jobs:
       - uses: actions/checkout@v2
       - <<: *pnpm-store-cache
       - <<: *node-modules-cache
+      - *setup-node
       - *setup-pnpm
       - <<: *fetch-target-branch
       - run: pnpm i --frozen-lockfile
@@ -50,6 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - <<: *node-modules-cache
+      - *setup-node
       - *setup-pnpm
       - <<: *fetch-target-branch
       - name: Inject slug/short variables
@@ -131,6 +133,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - <<: *node-modules-cache
+      - *setup-node
       - *setup-pnpm
       - <<: *fetch-target-branch
       - name: Inject slug/short variables

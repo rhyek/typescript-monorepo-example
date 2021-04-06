@@ -59,6 +59,9 @@ jobs:
             heroku_app_key: WEB_API_APP
           - name: internal-api
     steps:
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14.15.4
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - name: Set image names
