@@ -115,9 +115,6 @@ jobs:
           PR_NUMBER=${{ needs.pr-number.outputs.result }}
 
 
-          echo "hi $PR_NUMBER"
-
-
           get_image_id () {
             local PACKAGE_NAME=$1
             local TAG=$2
