@@ -59,7 +59,7 @@ async function prepareE2EIfNeeded(appName: string, options: Options) {
 
 if (require.main === module) {
   async function main() {
-    const argv = parseArgs(process.argv.slice(2));
+    const argv = parseArgs(process.argv.slice(2), { string: ['deps'] });
     const [appName] = argv._;
     const { repository, image, tag, deps } = argv;
     const finalDeps = deps
