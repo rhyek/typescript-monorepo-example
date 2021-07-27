@@ -5,7 +5,7 @@ on:
     branches:
       - main
 env:
-  !include(../includes/envs)
+  !include(../includes/common-envs)
   !include(../includes/push-envs)
 
 anchors:

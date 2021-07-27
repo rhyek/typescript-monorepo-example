@@ -7,7 +7,7 @@ on:
 
 #prettier-ignore
 env:
-  !include(../includes/envs)
+  !include(../includes/common-envs)
 
 anchors:
   !include(../includes/common-anchors)
