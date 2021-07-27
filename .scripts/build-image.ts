@@ -23,7 +23,7 @@ export async function buildImage(
   const { push, debug, pipeLogs } = options;
   await makeDedicationLockfile(appName);
   try {
-    console.log('🧪', 'Building docker image for'.blue, appName);
+    console.log('🐳', 'Building docker image for'.blue, appName);
     const appPath = await getDirForAppName(appName);
     const workspaceRoot = await findWorkspaceDir();
     const args = [

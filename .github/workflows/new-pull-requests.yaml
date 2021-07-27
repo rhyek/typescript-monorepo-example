@@ -76,8 +76,8 @@ jobs:
           rhyek --password-stdin
       - name: Set image name
         run: >-
-          echo "IMAGE=$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG }}-${{
-          matrix.name }}" >> $GITHUB_ENV
+          echo "IMAGE=$GITHUB_REPOSITORY_NAME_PART_SLUG-${{
+          env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}" >> $GITHUB_ENV
       - name: Should build docker image?
         id: needs-build
         run: |
