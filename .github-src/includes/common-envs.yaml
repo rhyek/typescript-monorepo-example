@@ -1,2 +1,3 @@
 DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+DOCKER_USER: rhyek
 DOCKER_REPOSITORY: rhyek

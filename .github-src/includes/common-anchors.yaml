@@ -1,6 +1,6 @@
 docker-login: &docker-login
   name: Docker login
-  run: echo ${{ env.DOCKER_TOKEN }} | docker login -u rhyek --password-stdin
+  run: echo ${{ env.DOCKER_TOKEN }} | docker login -u ${{ env.DOCKER_USER }} --password-stdin
 pnpm-store-cache: &pnpm-store-cache
   name: Cache pnpm store
   uses: actions/cache@v2

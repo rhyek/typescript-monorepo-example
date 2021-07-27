@@ -5,6 +5,7 @@ name: Tests and Build
       - main
 env:
   DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+  DOCKER_USER: rhyek
   DOCKER_REPOSITORY: rhyek
 jobs:
   lint-unit-tests:
@@ -71,7 +72,9 @@ jobs:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
-        run: echo ${{ env.DOCKER_TOKEN }} | docker login -u rhyek --password-stdin
+        run: >-
+          echo ${{ env.DOCKER_TOKEN }} | docker login -u ${{ env.DOCKER_USER }}
+          --password-stdin
       - name: Set image name
         run: >-
           echo "IMAGE=${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{
@@ -130,7 +133,9 @@ jobs:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
-        run: echo ${{ env.DOCKER_TOKEN }} | docker login -u rhyek --password-stdin
+        run: >-
+          echo ${{ env.DOCKER_TOKEN }} | docker login -u ${{ env.DOCKER_USER }}
+          --password-stdin
       - name: Set image name
         run: >-
           echo "IMAGE=${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{
