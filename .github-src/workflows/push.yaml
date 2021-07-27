@@ -19,6 +19,10 @@ anchors:
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       SLACK_USERNAME: github-actions
       SLACK_COLOR: ${{ job.status == 'success' && 'good' || job.status == 'cancelled' && '#808080' || 'danger' }}
+  set-image-names: &set-image-names
+    name: Set image names
+    id: image-names
+    run: echo "IMAGE=${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}" >> $GITHUB_ENV
   heroku-docker-login: &heroku-docker-login
     name: Heroku Docker login
     run: echo ${{ secrets.HEROKU_API_KEY }} | docker login registry.heroku.com --username=_ --password-stdin
@@ -69,12 +73,8 @@ jobs:
       - *setup-node
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
-      - name: Set image names
-        id: image-names
-        run: |
-          echo "::set-output name=github::${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}"
-          echo "::set-output name=heroku::registry.heroku.com/${{ env[matrix.heroku_app_key] }}/web"
       - <<: *docker-login
+      - <<: *set-image-names
       - name: Check if image for PR exists
         id: image-exists
         run: |
@@ -127,11 +127,7 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - <<: *docker-login
       - <<: *heroku-docker-login
-      - name: Set image names
-        id: image-names
-        run: |
-          echo "::set-output name=github::${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}"
-          echo "::set-output name=heroku::registry.heroku.com/${{ env[matrix.heroku_app_key] }}/web"
+      - <<: *set-image-names
       - uses: docker/setup-buildx-action@v1
       - name: Build and Push docker image
         run: |

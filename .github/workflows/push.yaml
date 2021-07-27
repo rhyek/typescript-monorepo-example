@@ -64,17 +64,13 @@ jobs:
           node-version: 14.15.4
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
-      - name: Set image names
-        id: image-names
-        run: >
-          echo "::set-output name=github::${{
-          env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{ env.GITHUB_BASE_REF_SLUG
-          }}-${{ matrix.name }}"
-
-          echo "::set-output name=heroku::registry.heroku.com/${{
-          env[matrix.heroku_app_key] }}/web"
       - name: Docker login
         run: echo ${{ env.DOCKER_TOKEN }} | docker login -u rhyek --password-stdin
+      - name: Set image names
+        id: image-names
+        run: >-
+          echo "IMAGE=${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{
+          env.GITHUB_REF_SLUG }}-${{ matrix.name }}" >> $GITHUB_ENV
       - name: Check if image for PR exists
         id: image-exists
         run: >
@@ -168,13 +164,9 @@ jobs:
           --username=_ --password-stdin
       - name: Set image names
         id: image-names
-        run: >
-          echo "::set-output name=github::${{
-          env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{ env.GITHUB_BASE_REF_SLUG
-          }}-${{ matrix.name }}"
-
-          echo "::set-output name=heroku::registry.heroku.com/${{
-          env[matrix.heroku_app_key] }}/web"
+        run: >-
+          echo "IMAGE=${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{
+          env.GITHUB_REF_SLUG }}-${{ matrix.name }}" >> $GITHUB_ENV
       - uses: docker/setup-buildx-action@v1
       - name: Build and Push docker image
         run: |
