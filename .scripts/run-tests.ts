@@ -75,13 +75,15 @@ export async function getLibsToPrebuild(
 ) {
   const packagesToTest = await getPackagesToTest(testType, options);
   if (packagesToTest.length > 0) {
-    const libsToPrebuild = await findPackages(
-      packagesToTest.map((packageName) => ({
-        namePattern: packageName,
-        excludeSelf: true,
-        includeDependencies: true,
-      })),
-    );
+    const libsToPrebuild = (
+      await findPackages(
+        packagesToTest.map((packageInfo) => ({
+          parentDir: packageInfo.dir,
+          excludeSelf: true,
+          includeDependencies: true,
+        })),
+      )
+    ).map((p) => p.dir);
     return libsToPrebuild;
   }
   return [];
@@ -103,7 +105,10 @@ export async function main(testType: 'unit' | 'e2e') {
   const libs = await getLibsToPrebuild(testType);
   await pnpmRun('build', libs, true);
   const all = await getPackagesToTest(testType);
-  await pnpmRun(`test:${testType}`, all);
+  await pnpmRun(
+    `test:${testType}`,
+    all.map((p) => p.dir),
+  );
 }
 
 if (require.main === module) {

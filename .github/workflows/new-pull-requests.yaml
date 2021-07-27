@@ -4,8 +4,8 @@ name: Tests and Build
     branches:
       - main
 env:
-  PACKAGES_PATH_PREFIX: user
   DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+  DOCKER_REPOSITORY: rhyek
 jobs:
   lint-unit-tests:
     name: Lint and Unit Tests
@@ -37,8 +37,8 @@ jobs:
           git fetch --no-tags --prune --depth=1 origin +refs/heads/${{
           github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
       - run: pnpm i --frozen-lockfile
-      - run: .scripts/ci/run-lint.ts
-      - run: .scripts/ci/run-tests.ts unit
+      - run: .scripts/run-lint.ts
+      - run: .scripts/run-tests.ts unit
   build:
     name: Build
     runs-on: ubuntu-20.04
@@ -48,11 +48,7 @@ jobs:
       matrix:
         include:
           - name: web-api
-            package-name: '@my/web-api'
-            path: apps/web-api
           - name: internal-api
-            package-name: '@my/internal-api'
-            path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
       - name: Cache node_modules
@@ -76,111 +72,32 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
         run: >-
-          echo ${{ env.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
-          --password-stdin
+          echo ${{ env.DOCKER_TOKEN }} | docker login registry-1.docker.io -u
+          rhyek --password-stdin
       - name: Set image name
         run: >-
-          echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG
-          }}-${{ matrix.name }}" >> $GITHUB_ENV
+          echo "IMAGE=$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG }}-${{
+          matrix.name }}" >> $GITHUB_ENV
       - name: Should build docker image?
         id: needs-build
         run: |
-          NEEDS_BUILD=$(.scripts/ci/needs-build.ts ${{ matrix.package-name }})
-          if [ "$NEEDS_BUILD" == "false" ]; then
-            docker buildx imagetools inspect ${{ env.IMAGE }}:latest && EXIT_CODE=0 || EXIT_CODE=$?
-            if [ $EXIT_CODE != 0 ]; then
-              NEEDS_BUILD="true"
-            fi
-          fi
+          NEEDS_BUILD=$(.scripts/ci/needs-build.ts ${{ matrix.name }} \
+                        --repository ${{ env.DOCKER_REPOSITORY }} \
+                        --image ${{ env.IMAGE }})
           echo "::set-output name=result::$NEEDS_BUILD"
       - uses: docker/setup-buildx-action@v1
         if: steps.needs-build.outputs.result == 'true'
       - name: Build docker image
         if: steps.needs-build.outputs.result == 'true'
-        run: >
-          DOCKER_TOKEN=${{ env.DOCKER_TOKEN }}
-
-          IMAGE_NAME=${{ env.IMAGE }}
-
-          PACKAGES_PATH_PREFIX=${{ env.PACKAGES_PATH_PREFIX }}
-
-          PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{
-          env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}
-
-          PR_NUMBER=${{ github.event.pull_request.number }}
-
-          APP_PATH=${{ matrix.path }}
-
-
-          set -e
-
-          set -o pipefail
-
-
+        run: |
           docker -v
-
           docker buildx version
 
-
-          .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }}
-
-
-          get_image_id () {
-            local PACKAGE_NAME=$1
-            local TAG=$2
-
-            curl -s \
-              -H "Authorization: Bearer $DOCKER_TOKEN" \
-              -H 'Accept: application/vnd.github.v3+json' \
-              "https://api.github.com/$PACKAGES_PATH_PREFIX/packages/container/$PACKAGE_NAME/versions" \
-              | jq -rM "first(.[] | select(.metadata.container.tags | index(\"$TAG\"))).id // null" \
-              || echo null
-          }
-
-
-          delete_image () {
-            local PACKAGE_NAME=$1
-            local IMAGE_ID=$2
-
-            curl -i \
-              -X DELETE \
-              -H "Authorization: Bearer $DOCKER_TOKEN" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/$PACKAGES_PATH_PREFIX/packages/container/$PACKAGE_NAME/versions/$IMAGE_ID"
-          }
-
-
-          OLD_PR_IMAGE_ID=$(get_image_id $PACKAGE_NAME $PR_NUMBER)
-
-          OLD_PR_CACHE_IMAGE_ID=$(get_image_id "$PACKAGE_NAME-cache" $PR_NUMBER)
-
-
-          docker buildx build \
-            --cache-from="type=registry,ref=$IMAGE_NAME-cache:latest" \
-            --cache-from="type=registry,ref=$IMAGE_NAME-cache:$PR_NUMBER" \
-            --cache-to="type=registry,ref=$IMAGE_NAME-cache:$PR_NUMBER" \
-            -t "$IMAGE_NAME:$PR_NUMBER" \
-            -f "$APP_PATH/Dockerfile" \
-            --push \
-            .
-
-          NEW_PR_IMAGE_ID=$(get_image_id $PACKAGE_NAME $PR_NUMBER)
-
-          NEW_PR_CACHE_IMAGE_ID=$(get_image_id "$PACKAGE_NAME-cache" $PR_NUMBER)
-
-
-          if [ "$OLD_PR_IMAGE_ID" != 'null' ] && [ "$OLD_PR_IMAGE_ID" !=
-          "$NEW_PR_IMAGE_ID" ]; then
-            delete_image $PACKAGE_NAME $OLD_PR_IMAGE_ID
-            echo "Deleted old PR image for package $PACKAGE_NAME with id $OLD_PR_IMAGE_ID"
-          fi
-
-
-          if [ "$OLD_PR_CACHE_IMAGE_ID" != 'null' ] && [
-          "$OLD_PR_CACHE_IMAGE_ID" != "$NEW_PR_CACHE_IMAGE_ID" ]; then
-            delete_image $PACKAGE_NAME $OLD_PR_CACHE_IMAGE_ID
-            echo "Deleted old PR image cache for package $PACKAGE_NAME with id $OLD_PR_CACHE_IMAGE_ID"
-          fi
+          .scripts/build-image.ts \
+            --repository ${{ env.DOCKER_REPOSITORY }} \
+            --image ${{ env.IMAGE }} \
+            --tag ${{ github.event.pull_request.number }} \
+            ${{ matrix.name }}
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-20.04
@@ -190,12 +107,8 @@ jobs:
       matrix:
         include:
           - name: web-api
-            package-name: '@my/web-api'
-            path: apps/web-api
             deps: internal-api
           - name: internal-api
-            package-name: '@my/internal-api'
-            path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
       - name: Cache node_modules
@@ -219,22 +132,18 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
         run: >-
-          echo ${{ env.DOCKER_TOKEN }} | docker login ghcr.io -u rhyek
-          --password-stdin
-      - name: Should run tests?
-        id: should-run
-        env:
-          SUT_PACKAGE_NAME: ${{ matrix.package-name }}
-          SUT_PATH: ${{ matrix.path }}
-          DEPS: ${{ matrix.deps }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: >
-          .scripts/ci/should-run-integration-tests.sh && EXIT_CODE=0 ||
-          EXIT_CODE=$?
-
-          SHOULD_RUN=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
-
-          echo "::set-output name=result::$SHOULD_RUN"
+          echo ${{ env.DOCKER_TOKEN }} | docker login registry-1.docker.io -u
+          rhyek --password-stdin
+      - name: Prepare e2e tests if needed
+        id: prepare-e2e
+        run: |
+          PREPARED=.scripts/prepare-e2e-if-needed.ts \
+            --repository ${{ env.DOCKER_REPOSITORY }} \
+            --image ${{ env.IMAGE }} \
+            --tag ${{ github.event.pull_request.number }} \
+            --deps ${{ matrix.deps }} \
+             ${{ matrix.name }}
+          echo "::set-output name=prepared::$PREPARED"
       - name: Run integration tests
-        if: steps.should-run.outputs.result == 'true'
-        run: pnpm test:e2e --filter '${{ matrix.package-name }}'
+        if: steps.prepare-e2e.outputs.prepared == 'true'
+        run: pnpm test:e2e --filter {${{ matrix.name }}}

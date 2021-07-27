@@ -12,10 +12,12 @@ import {
   PackageSelector,
 } from '@pnpm/filter-workspace-packages';
 import { Project } from '@pnpm/find-workspace-packages';
-import { findWorkspaceDir } from './pnpm-helpers';
-import { lockfileName } from './consts';
-import { makeDedicatedLockfileForPackage } from './dedicated-lockfile';
+import { findWorkspaceDir } from '../common/pnpm-helpers';
+import { lockfileName } from '../common/consts';
+import { _internalMakeDedicatedLockfileForPackage } from './dedicated-lockfile';
 import { debug } from './log';
+import { PackageInfo } from './types/package-info';
+import { getAppNameForDir } from './app-name-utils';
 
 export type Selector = PackageSelector & {
   diffInclude?: RegExp | RegExp[];
@@ -47,12 +49,12 @@ function changedBasedOnDiffFiles(
 
 const changedBasedOnLockfileDiff = mem(
   async (workspaceDir: string, refLockfileDir: string, packageName: string) => {
-    const current = await makeDedicatedLockfileForPackage(
+    const current = await _internalMakeDedicatedLockfileForPackage(
       workspaceDir,
       packageName,
       false,
     );
-    const old = await makeDedicatedLockfileForPackage(
+    const old = await _internalMakeDedicatedLockfileForPackage(
       refLockfileDir,
       packageName,
       false,
@@ -93,11 +95,12 @@ async function filterProjects(
       if (!Array.isArray(diffExclude)) {
         diffExclude = [diffExclude];
       }
-      let packages = await filterPkgsBySelectorObjects(
+      const packages = await filterPkgsBySelectorObjects(
         allProjects,
         [{ namePattern, parentDir }],
         { workspaceDir },
       );
+      // eslint-disable-next-line prefer-const
       for (let [packageBaseDir, config] of Object.entries(
         packages.selectedProjectsGraph,
       )) {
@@ -214,7 +217,7 @@ export interface FindChangePackagesOptions {
 export async function findChangedPackages(
   selectors: Selector[],
   options?: FindChangePackagesOptions,
-) {
+): Promise<PackageInfo[]> {
   const comparisonRef = await getTargetComparisonGitRef();
   const {
     useDiffFiles = true,
@@ -231,13 +234,18 @@ export async function findChangedPackages(
     useLockFile ? refLockfile.dir : false,
     selectors,
   );
-  const packageNames = Object.values(graph)
-    .map((node) => node.package.manifest.name!)
+  const packageInfos = Object.values(graph)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    .map(
+      (node): PackageInfo => ({
+        name: getAppNameForDir(node.package.dir),
+        dir: node.package.dir,
+      }),
+    )
     .filter(
-      (packageName) =>
-        typeof onlyPackages === 'undefined' ||
-        onlyPackages.includes(packageName),
+      ({ name }) =>
+        typeof onlyPackages === 'undefined' || onlyPackages.includes(name),
     );
-  logResult(packageNames);
-  return packageNames;
+  logResult(packageInfos.map((i) => i.name));
+  return packageInfos;
 }
