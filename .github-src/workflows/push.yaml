@@ -72,7 +72,7 @@ jobs:
       - name: Set image names
         id: image-names
         run: |
-          echo "::set-output name=github::ghcr.io/${{ github.repository }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}"
+          echo "::set-output name=github::${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}"
           echo "::set-output name=heroku::registry.heroku.com/${{ env[matrix.heroku_app_key] }}/web"
       - <<: *docker-login
       - name: Check if image for PR exists
