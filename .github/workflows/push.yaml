@@ -68,12 +68,13 @@ jobs:
         run: echo ${{ env.DOCKER_TOKEN }} | docker login -u rhyek --password-stdin
       - name: Set image names
         id: image-names
-        run: >-
+        run: >
           echo "::set-output name=github::${{
           env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{ env.GITHUB_REF_SLUG }}-${{
-          matrix.name }}" echo "::set-output
-          name=heroku::registry.heroku.com/${{ env[matrix.heroku_app_key]
-          }}/web"
+          matrix.name }}"
+
+          echo "::set-output name=heroku::registry.heroku.com/${{
+          env[matrix.heroku_app_key] }}/web"
       - name: Check if image for PR exists
         id: image-exists
         run: >
@@ -167,12 +168,13 @@ jobs:
           --username=_ --password-stdin
       - name: Set image names
         id: image-names
-        run: >-
+        run: >
           echo "::set-output name=github::${{
           env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{ env.GITHUB_REF_SLUG }}-${{
-          matrix.name }}" echo "::set-output
-          name=heroku::registry.heroku.com/${{ env[matrix.heroku_app_key]
-          }}/web"
+          matrix.name }}"
+
+          echo "::set-output name=heroku::registry.heroku.com/${{
+          env[matrix.heroku_app_key] }}/web"
       - uses: docker/setup-buildx-action@v1
       - name: Build and Push docker image
         run: |
