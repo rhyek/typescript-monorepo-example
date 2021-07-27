@@ -9,7 +9,7 @@ export COMPOSE_PROJECT_NAME=web-api-e2e
 # export DOCKER_BUILDKIT=1
 export INTERNAL_API_PORT=4001
 
-../../../.scripts/ci/make-dedicated-lockfile.ts @my/internal-api
+../../../.scripts/make-dedicated-lockfile.ts internal-api
 
 WHICH=$([ "$CI" == "true" ] && echo 'ci' || echo 'dev')
 docker-compose -f docker-compose.yaml -f "docker-compose.$WHICH.yaml" up --build --detach

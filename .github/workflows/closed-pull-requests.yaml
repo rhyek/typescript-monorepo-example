@@ -6,8 +6,8 @@ name: Delete images for closed PRs
     types:
       - closed
 env:
-  PACKAGES_PATH_PREFIX: user
   DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+  DOCKER_REPOSITORY: rhyek
 jobs:
   delete-unused-images:
     name: Delete unused image tags
@@ -23,14 +23,14 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - name: Delete PR image if exists
         run: >
-          DOCKER_TOKEN=${{ env.DOCKER_TOKEN }}
+          # DOCKER_TOKEN=${{ env.DOCKER_TOKEN }}
 
-          PACKAGES_PATH_PREFIX=${{ env.PACKAGES_PATH_PREFIX }}
+          # PACKAGES_PATH_PREFIX=${{ env.PACKAGES_PATH_PREFIX }}
 
-          PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{
+          # PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{
           env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}
 
-          PR_NUMBER=${{ github.event.pull_request.number }}
+          # PR_NUMBER=${{ github.event.pull_request.number }}
 
 
           get_image_id () {
@@ -58,20 +58,30 @@ jobs:
           }
 
 
-          find_and_delete_image () {
-            local PACKAGE_NAME=$1
-            local TAG=$2
+          # find_and_delete_image () {
 
-            IMAGE_ID=$(get_image_id $PACKAGE_NAME $TAG)
-            if [ "$IMAGE_ID" != 'null' ]; then
-              delete_image $PACKAGE_NAME $IMAGE_ID
-              echo "Deleted $PACKAGE_NAME:$TAG with image id $IMAGE_ID"
-            else
-              echo "Image $PACKAGE_NAME:$TAG not found"
-            fi
-          }
+          #   local PACKAGE_NAME=$1
+
+          #   local TAG=$2
 
 
-          find_and_delete_image $PACKAGE_NAME $PR_NUMBER
+          #   IMAGE_ID=$(get_image_id $PACKAGE_NAME $TAG)
 
-          find_and_delete_image "${PACKAGE_NAME}-cache" $PR_NUMBER
+          #   if [ "$IMAGE_ID" != 'null' ]; then
+
+          #     delete_image $PACKAGE_NAME $IMAGE_ID
+
+          #     echo "Deleted $PACKAGE_NAME:$TAG with image id $IMAGE_ID"
+
+          #   else
+
+          #     echo "Image $PACKAGE_NAME:$TAG not found"
+
+          #   fi
+
+          # }
+
+
+          # find_and_delete_image $PACKAGE_NAME $PR_NUMBER
+
+          # find_and_delete_image "${PACKAGE_NAME}-cache" $PR_NUMBER

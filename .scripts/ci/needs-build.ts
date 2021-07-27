@@ -1,41 +1,35 @@
 #!/usr/bin/env ts-node-transpile-only
-import yargs from 'yargs';
-import { findChangedPackages } from './common/find-changed-packages';
+import 'colors';
+import parseArgs from 'minimist';
+import { needsBuild } from '../needs-build';
+import { remoteImageExists } from './remote-image-exists';
 
-yargs(process.argv.slice(2))
-  .command(
-    '$0 <package>',
-    'decide wether to docker build a package',
-    (yargs) => {
-      yargs
-        .positional('package', {
-          type: 'string',
-          describe: 'package name as shown in its package.json',
-        })
-        .version(false)
-        .help();
-    },
-    async (argv) => {
-      const { package: packageName } = (argv as unknown) as { package: string };
-      const changed = await findChangedPackages([
-        {
-          parentDir: 'shared',
-          excludeSelf: true,
-          includeDependents: true,
-          diffInclude: [/tsconfig\.(build\.)?json/, /\/package\.json/, /\.ts$/],
-          diffExclude: /\.(e2e-)?spec\.ts$/,
-        },
-        {
-          namePattern: packageName,
-          diffInclude: [/tsconfig\.(build\.)?json/, /\/package\.json/, /\.ts$/],
-          diffExclude: /\.(e2e-)?spec\.ts$/,
-        },
-      ]);
-      if (changed.includes(packageName)) {
-        console.log('true');
-      } else {
-        console.log('false');
-      }
-    },
-  )
-  .parse();
+export async function ciNeedsBuild(
+  appName: string,
+  repository: string,
+  image: string,
+) {
+  if (
+    (await needsBuild(appName)) ||
+    !(await remoteImageExists(repository, image, 'latest'))
+  ) {
+    return true;
+  }
+  return false;
+}
+
+if (require.main === module) {
+  async function main() {
+    const argv = parseArgs(process.argv.slice(2));
+    const [appName] = argv._;
+    const { repository, image } = argv;
+    console.log(
+      (await ciNeedsBuild(appName, repository, image)) ? 'true' : 'false',
+    );
+  }
+  main();
+
+  process.on('unhandledRejection', (error) => {
+    throw error;
+  });
+}

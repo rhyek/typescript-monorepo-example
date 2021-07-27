@@ -33,8 +33,8 @@ jobs:
       - *setup-pnpm
       - <<: *fetch-target-branch
       - run: pnpm i --frozen-lockfile
-      - run: .scripts/ci/run-lint.ts
-      - run: .scripts/ci/run-tests.ts unit
+      - run: .scripts/run-lint.ts
+      - run: .scripts/run-tests.ts unit
   build:
     name: Build
     runs-on: ubuntu-20.04
@@ -43,11 +43,7 @@ jobs:
       matrix:
         include:
           - name: web-api
-            package-name: '@my/web-api'
-            path: apps/web-api
           - name: internal-api
-            package-name: '@my/internal-api'
-            path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
       - <<: *node-modules-cache
@@ -58,64 +54,27 @@ jobs:
         uses: rlespinasse/github-slug-action@v3.x
       - <<: *docker-login
       - name: Set image name
-        run: echo "IMAGE=ghcr.io/$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}" >> $GITHUB_ENV
+        run: echo "IMAGE=$GITHUB_REPOSITORY-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}" >> $GITHUB_ENV
       - name: Should build docker image?
         id: needs-build
         run: |
-          NEEDS_BUILD=$(.scripts/ci/needs-build.ts ${{ matrix.package-name }})
-          if [ "$NEEDS_BUILD" == "false" ]; then
-            docker buildx imagetools inspect ${{ env.IMAGE }}:latest && EXIT_CODE=0 || EXIT_CODE=$?
-            if [ $EXIT_CODE != 0 ]; then
-              NEEDS_BUILD="true"
-            fi
-          fi
+          NEEDS_BUILD=$(.scripts/ci/needs-build.ts ${{ matrix.name }} \
+                        --repository ${{ env.DOCKER_REPOSITORY }} \
+                        --image ${{ env.IMAGE }})
           echo "::set-output name=result::$NEEDS_BUILD"
       - uses: docker/setup-buildx-action@v1
         if: steps.needs-build.outputs.result == 'true'
       - name: Build docker image
         if: steps.needs-build.outputs.result == 'true'
         run: |
-          DOCKER_TOKEN=${{ env.DOCKER_TOKEN }}
-          IMAGE_NAME=${{ env.IMAGE }}
-          PACKAGES_PATH_PREFIX=${{ env.PACKAGES_PATH_PREFIX }}
-          PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          APP_PATH=${{ matrix.path }}
-
-          set -e
-          set -o pipefail
-
           docker -v
           docker buildx version
 
-          .scripts/ci/make-dedicated-lockfile.ts ${{ matrix.package-name }}
-
-          !include(../includes/image_helpers.sh)
-
-          OLD_PR_IMAGE_ID=$(get_image_id $PACKAGE_NAME $PR_NUMBER)
-          OLD_PR_CACHE_IMAGE_ID=$(get_image_id "$PACKAGE_NAME-cache" $PR_NUMBER)
-
-          docker buildx build \
-            --cache-from="type=registry,ref=$IMAGE_NAME-cache:latest" \
-            --cache-from="type=registry,ref=$IMAGE_NAME-cache:$PR_NUMBER" \
-            --cache-to="type=registry,ref=$IMAGE_NAME-cache:$PR_NUMBER" \
-            -t "$IMAGE_NAME:$PR_NUMBER" \
-            -f "$APP_PATH/Dockerfile" \
-            --push \
-            .
-
-          NEW_PR_IMAGE_ID=$(get_image_id $PACKAGE_NAME $PR_NUMBER)
-          NEW_PR_CACHE_IMAGE_ID=$(get_image_id "$PACKAGE_NAME-cache" $PR_NUMBER)
-
-          if [ "$OLD_PR_IMAGE_ID" != 'null' ] && [ "$OLD_PR_IMAGE_ID" != "$NEW_PR_IMAGE_ID" ]; then
-            delete_image $PACKAGE_NAME $OLD_PR_IMAGE_ID
-            echo "Deleted old PR image for package $PACKAGE_NAME with id $OLD_PR_IMAGE_ID"
-          fi
-
-          if [ "$OLD_PR_CACHE_IMAGE_ID" != 'null' ] && [ "$OLD_PR_CACHE_IMAGE_ID" != "$NEW_PR_CACHE_IMAGE_ID" ]; then
-            delete_image $PACKAGE_NAME $OLD_PR_CACHE_IMAGE_ID
-            echo "Deleted old PR image cache for package $PACKAGE_NAME with id $OLD_PR_CACHE_IMAGE_ID"
-          fi
+          .scripts/build-image.ts \
+            --repository ${{ env.DOCKER_REPOSITORY }} \
+            --image ${{ env.IMAGE }} \
+            --tag ${{ github.event.pull_request.number }} \
+            ${{ matrix.name }}
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-20.04
@@ -124,12 +83,8 @@ jobs:
       matrix:
         include:
           - name: web-api
-            package-name: '@my/web-api'
-            path: apps/web-api
             deps: internal-api
           - name: internal-api
-            package-name: '@my/internal-api'
-            path: apps/internal-api
     steps:
       - uses: actions/checkout@v2
       - <<: *node-modules-cache
@@ -139,17 +94,16 @@ jobs:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - <<: *docker-login
-      - name: Should run tests?
-        id: should-run
-        env:
-          SUT_PACKAGE_NAME: ${{ matrix.package-name }}
-          SUT_PATH: ${{ matrix.path }}
-          DEPS: ${{ matrix.deps }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+      - name: Prepare e2e tests if needed
+        id: prepare-e2e
         run: |
-          .scripts/ci/should-run-integration-tests.sh && EXIT_CODE=0 || EXIT_CODE=$?
-          SHOULD_RUN=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
-          echo "::set-output name=result::$SHOULD_RUN"
+          PREPARED=.scripts/prepare-e2e-if-needed.ts \
+            --repository ${{ env.DOCKER_REPOSITORY }} \
+            --image ${{ env.IMAGE }} \
+            --tag ${{ github.event.pull_request.number }} \
+            --deps ${{ matrix.deps }} \
+             ${{ matrix.name }}
+          echo "::set-output name=prepared::$PREPARED"
       - name: Run integration tests
-        if: steps.should-run.outputs.result == 'true'
-        run: pnpm test:e2e --filter '${{ matrix.package-name }}'
+        if: steps.prepare-e2e.outputs.prepared == 'true'
+        run: pnpm test:e2e --filter {${{ matrix.name }}}

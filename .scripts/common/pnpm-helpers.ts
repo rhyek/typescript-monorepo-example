@@ -2,25 +2,24 @@ import path from 'path';
 import 'colors';
 import execa from 'execa';
 import findUp from 'find-up';
+import { getDirWithoutWorkspaceRootForDir } from './app-name-utils';
 
 async function run(
   command: string,
-  packageNames: string[],
+  appDirs: string[],
   args: string[],
   silent: boolean,
 ) {
-  if (packageNames.length > 0) {
-    await execa(
-      'pnpm',
-      [
-        command,
-        '--parallel',
-        '--parseable',
-        ...packageNames.map((packageName) => ['--filter', packageName]),
-        ...args,
-      ].flat(1),
-      silent ? undefined : { stdio: 'inherit' },
-    );
+  appDirs = await Promise.all(appDirs.map(getDirWithoutWorkspaceRootForDir));
+  if (appDirs.length > 0) {
+    const allArgs = [
+      command,
+      '--parallel',
+      '--parseable',
+      ...appDirs.map((appDir) => ['--filter', `{${appDir}}`]),
+      ...args,
+    ].flat(1);
+    await execa('pnpm', allArgs, silent ? undefined : { stdio: 'inherit' });
   } else if (!silent) {
     console.log('No packages selected.'.blue.italic);
   }
@@ -28,18 +27,18 @@ async function run(
 
 export async function pnpmExec(
   command: string[],
-  packageNames: string[],
+  appDirs: string[],
   silent = false,
 ) {
-  await run('exec', packageNames, ['--', ...command], silent);
+  await run('exec', appDirs, ['--', ...command], silent);
 }
 
 export async function pnpmRun(
   command: string,
-  packageNames: string[],
+  appDirs: string[],
   silent = false,
 ) {
-  await run('run', packageNames, [command], silent);
+  await run('run', appDirs, [command], silent);
 }
 
 export async function findWorkspaceDir() {

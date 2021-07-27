@@ -9,10 +9,11 @@ import { readWantedLockfile, writeWantedLockfile } from '@pnpm/lockfile-file';
 import { pruneSharedLockfile } from '@pnpm/prune-lockfile';
 import { lockfileName } from './consts';
 import { findWorkspaceDir } from './pnpm-helpers';
+import { getDirForAppName } from './app-name-utils';
 
-export async function makeDedicatedLockfileForPackage(
+export async function _internalMakeDedicatedLockfileForPackage(
   originLockfileDir: string,
-  forPackageName: string,
+  forAppName: string,
   includeDependencies: boolean,
 ) {
   const workspaceDir = await findWorkspaceDir();
@@ -21,7 +22,7 @@ export async function makeDedicatedLockfileForPackage(
     allProjects,
     [
       {
-        namePattern: forPackageName,
+        parentDir: await getDirForAppName(forAppName),
         includeDependencies,
       },
     ],
@@ -44,7 +45,7 @@ export async function makeDedicatedLockfileForPackage(
   }
   const dedicatedLockfile = pruneSharedLockfile(lockfile);
   if (Object.keys(dedicatedLockfile.importers).length === 0) {
-    console.error(`Dedicated lockfile for package ${forPackageName} is empty.`);
+    console.error(`Dedicated lockfile for package ${forAppName} is empty.`);
     return null;
   } else {
     const tempDir = tempy.directory();
