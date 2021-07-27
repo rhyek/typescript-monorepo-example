@@ -20,6 +20,9 @@ anchors:
   fetch-target-branch: &fetch-target-branch
     name: Fetch target branch
     run: git fetch --no-tags --prune --depth=1 origin +refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+  set-image-name: &set-image-name
+    name: Set image name
+    run: echo "IMAGE=$GITHUB_REPOSITORY_NAME_PART_SLUG-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}" >> $GITHUB_ENV
 
 jobs:
   lint-unit-tests:
@@ -53,8 +56,7 @@ jobs:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - <<: *docker-login
-      - name: Set image name
-        run: echo "IMAGE=$GITHUB_REPOSITORY_NAME_PART_SLUG-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}" >> $GITHUB_ENV
+      - <<: *set-image-name
       - name: Should build docker image?
         id: needs-build
         run: |
@@ -94,6 +96,7 @@ jobs:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - <<: *docker-login
+      - <<: *set-image-name
       - name: Prepare e2e tests if needed
         id: prepare-e2e
         run: |
