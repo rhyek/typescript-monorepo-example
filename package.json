@@ -10,7 +10,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "jest .scripts/**/*.spec.ts && .scripts/pre-commit.ts && .github-src/build.sh"
+      "pre-commit": "jest -o .scripts/**/*.spec.ts && .scripts/pre-commit.ts && .github-src/build.sh"
     }
   },
   "devDependencies": {
