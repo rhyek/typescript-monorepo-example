@@ -2,9 +2,9 @@
 import 'colors';
 import execa from 'execa';
 import parseArgs from 'minimist';
-import { makeDedicationLockfile } from './make-dedicated-lockfile';
-import { findWorkspaceDir } from './common/pnpm-helpers';
 import { getDirForAppName } from './common/app-name-utils';
+import { findWorkspaceDir } from './common/pnpm-helpers';
+import { makeDedicationLockfile } from './make-dedicated-lockfile';
 
 type BuildImageOptions = {
   push?: {
@@ -44,7 +44,7 @@ export async function buildImage(
       `${appPath}/Dockerfile`,
       push ? '--push' : '',
       workspaceRoot,
-    ];
+    ].filter((arg) => arg);
     if (debug) {
       console.debug('docker build args:', JSON.stringify(args, null, 2));
     }

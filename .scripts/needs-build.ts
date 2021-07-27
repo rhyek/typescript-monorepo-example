@@ -3,6 +3,12 @@ import yargs from 'yargs';
 import { getDirForAppName } from './common/app-name-utils';
 import { findChangedPackages } from './common/find-changed-packages';
 
+const overrides: any = {
+  'admin-backend': {
+    diffInclude: [],
+  },
+};
+
 export async function needsBuild(appName: string) {
   const changed = await findChangedPackages([
     {
@@ -21,6 +27,7 @@ export async function needsBuild(appName: string) {
         /\.ts$/,
       ],
       diffExclude: /\.(e2e-)?spec\.ts$/,
+      ...overrides[appName],
     },
   ]);
   return changed.map((c) => c.name).includes(appName);

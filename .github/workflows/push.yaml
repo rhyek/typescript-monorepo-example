@@ -5,6 +5,7 @@ name: Publish and Deploy
       - main
 env:
   DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+  DOCKER_USER: rhyek
   DOCKER_REPOSITORY: rhyek
   HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
   WEB_API_APP: typescript-monorepo
@@ -65,7 +66,9 @@ jobs:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
-        run: echo ${{ env.DOCKER_TOKEN }} | docker login -u rhyek --password-stdin
+        run: >-
+          echo ${{ env.DOCKER_TOKEN }} | docker login -u ${{ env.DOCKER_USER }}
+          --password-stdin
       - name: Set image names
         id: image-names
         run: >
@@ -161,7 +164,9 @@ jobs:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
       - name: Docker login
-        run: echo ${{ env.DOCKER_TOKEN }} | docker login -u rhyek --password-stdin
+        run: >-
+          echo ${{ env.DOCKER_TOKEN }} | docker login -u ${{ env.DOCKER_USER }}
+          --password-stdin
       - name: Heroku Docker login
         run: >-
           echo ${{ secrets.HEROKU_API_KEY }} | docker login registry.heroku.com

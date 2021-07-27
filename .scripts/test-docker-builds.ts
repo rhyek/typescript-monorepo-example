@@ -1,13 +1,18 @@
 #!/usr/bin/env ts-node-transpile-only
-import path from 'path';
 import fs from 'fs/promises';
+import path from 'path';
+import parseArgs from 'minimist';
 import 'colors';
+import { buildImage } from './build-image';
 import { findPackages } from './common/find-packages';
 import { findWorkspaceDir } from './common/pnpm-helpers';
 import { needsBuild } from './needs-build';
-import { buildImage } from './build-image';
 
-export async function testDockerBuilds(onlyChanged: boolean) {
+export async function testDockerBuilds(options: {
+  onlyChanged: boolean;
+  debug?: boolean;
+}) {
+  const { onlyChanged, debug = false } = options;
   const workspaceRoot = await findWorkspaceDir();
   const apps = await findPackages([{ parentDir: `${workspaceRoot}/apps` }]);
   type Config = { name: string; dir: string; dockerfile: string };
@@ -33,8 +38,8 @@ export async function testDockerBuilds(onlyChanged: boolean) {
   } else {
     await Promise.all(
       configs.map(async (config) => {
-        const { name: packageName } = config;
-        await buildImage(packageName);
+        const { name } = config;
+        await buildImage(name, { debug });
       }),
     );
   }
@@ -42,7 +47,12 @@ export async function testDockerBuilds(onlyChanged: boolean) {
 }
 
 if (require.main === module) {
-  testDockerBuilds(false);
+  async function main() {
+    const argv = parseArgs(process.argv.slice(2), { boolean: ['debug'] });
+    const { debug } = argv;
+    testDockerBuilds({ onlyChanged: false, debug });
+  }
+  main();
 
   process.on('unhandledRejection', (error) => {
     throw error;
