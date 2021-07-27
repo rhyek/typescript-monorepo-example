@@ -22,7 +22,7 @@ anchors:
     run: git fetch --no-tags --prune --depth=1 origin +refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
   set-image-name: &set-image-name
     name: Set image name
-    run: echo "IMAGE=$GITHUB_REPOSITORY_NAME_PART_SLUG-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}" >> $GITHUB_ENV
+    run: echo "IMAGE=${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}" >> $GITHUB_ENV
 
 jobs:
   lint-unit-tests:
@@ -60,9 +60,10 @@ jobs:
       - name: Should build docker image?
         id: needs-build
         run: |
-          NEEDS_BUILD=$(.scripts/ci/needs-build.ts ${{ matrix.name }} \
+          NEEDS_BUILD=$(.scripts/ci/needs-build.ts \
                         --repository ${{ env.DOCKER_REPOSITORY }} \
-                        --image ${{ env.IMAGE }})
+                        --image ${{ env.IMAGE }} \
+                        ${{ matrix.name }})
           echo "::set-output name=result::$NEEDS_BUILD"
       - uses: docker/setup-buildx-action@v1
         if: steps.needs-build.outputs.result == 'true'
@@ -73,10 +74,10 @@ jobs:
           docker buildx version
 
           .scripts/build-image.ts \
+            ${{ matrix.name }} \
             --repository ${{ env.DOCKER_REPOSITORY }} \
             --image ${{ env.IMAGE }} \
-            --tag ${{ github.event.pull_request.number }} \
-            ${{ matrix.name }}
+            --tag ${{ github.event.pull_request.number }}
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-20.04
@@ -101,11 +102,11 @@ jobs:
         id: prepare-e2e
         run: |
           PREPARED=$(.scripts/ci/prepare-e2e-if-needed.ts \
+             ${{ matrix.name }} \
             --repository ${{ env.DOCKER_REPOSITORY }} \
             --image ${{ env.IMAGE }} \
             --tag ${{ github.event.pull_request.number }} \
-            --deps ${{ matrix.deps }} \
-             ${{ matrix.name }})
+            --deps ${{ matrix.deps }})
           echo "::set-output name=prepared::$PREPARED"
       - name: Run integration tests
         if: steps.prepare-e2e.outputs.prepared == 'true'
