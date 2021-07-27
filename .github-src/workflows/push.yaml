@@ -78,7 +78,7 @@ jobs:
       - name: Check if image for PR exists
         id: image-exists
         run: |
-          docker pull ${{ steps.image-names.outputs.github }}:${{ needs.pr-number.outputs.result }} && EXIT_CODE=0 || EXIT_CODE=$?
+          docker pull ${{ env.DOCKER_REPOSITORY }}/${{ steps.image-names.outputs.github }}:${{ needs.pr-number.outputs.result }} && EXIT_CODE=0 || EXIT_CODE=$?
           RESULT=$([ $EXIT_CODE = 0 ] && echo 'true' || echo 'false')
           echo "::set-output name=result::$RESULT"
       - <<: *heroku-docker-login
@@ -86,47 +86,27 @@ jobs:
       - name: Tag and push to heroku
         if: steps.image-exists.outputs.result == 'true' && matrix.heroku_app_key != ''
         run: |
-          docker tag ${{ steps.image-names.outputs.github }}:${{ needs.pr-number.outputs.result }} ${{ steps.image-names.outputs.heroku }}
+          docker tag ${{ env.DOCKER_REPOSITORY }}/${{ steps.image-names.outputs.github }}:${{ needs.pr-number.outputs.result }} ${{ steps.image-names.outputs.heroku }}
           docker push ${{ steps.image-names.outputs.heroku }}
       - name: Tag 'latest' and push to ghcr
         id: push-to-ghcr
         if: steps.image-exists.outputs.result == 'true'
         run: |
-          DOCKER_TOKEN=${{ env.DOCKER_TOKEN }}
-          IMAGE_NAME=${{ steps.image-names.outputs.github }}
-          PACKAGES_PATH_PREFIX=${{ env.PACKAGES_PATH_PREFIX }}
-          PACKAGE_NAME=${{ env.GITHUB_REPOSITORY_NAME_PART }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}
-          PR_NUMBER=${{ needs.pr-number.outputs.result }}
-
-          !include(../includes/image_helpers.sh)
-
-          re_tag_and_delete_old () {
+          tag_latest_if_pr_image_exists () {
             local IMAGE_NAME=$1
-            local PACKAGE_NAME=$2
-            local TAG=$3
 
-            docker buildx imagetools inspect "$IMAGE_NAME:$TAG" &> /dev/null && EXIT_CODE=0 || EXIT_CODE=$?
+            docker buildx imagetools inspect \
+              "${{ env.DOCKER_REPOSITORY }}/$IMAGE_NAME:${{ needs.pr-number.outputs.result }}" &> /dev/null && EXIT_CODE=0 || EXIT_CODE=$?
 
             if [ $EXIT_CODE = 0 ]; then
-              BUILT_IMAGE_ID=$(get_image_id $PACKAGE_NAME $TAG)
-              OLD_LATEST_IMAGE_ID=$(get_image_id $PACKAGE_NAME 'latest')
-
-              docker buildx imagetools create -t "$IMAGE_NAME:latest" "$IMAGE_NAME:$TAG"
-
-              NEW_LATEST_IMAGE_ID=$(get_image_id $PACKAGE_NAME 'latest')
-              if [ "$BUILT_IMAGE_ID" != 'null' ] && [ "$BUILT_IMAGE_ID" != "$NEW_LATEST_IMAGE_ID" ]; then
-                delete_image $PACKAGE_NAME $BUILT_IMAGE_ID
-                echo "Deleted old image with id $BUILT_IMAGE_ID"
-              fi
-              if [ "$OLD_LATEST_IMAGE_ID" != 'null' ] && [ "$OLD_LATEST_IMAGE_ID" != "$NEW_LATEST_IMAGE_ID" ]; then
-                delete_image $PACKAGE_NAME $OLD_LATEST_IMAGE_ID
-                echo "Deleted old latest image with id $OLD_LATEST_IMAGE_ID"
-              fi
+              docker buildx imagetools create \
+                -t "${{ env.DOCKER_REPOSITORY }}/$IMAGE_NAME:latest" \
+                "${{ env.DOCKER_REPOSITORY }}/$IMAGE_NAME:${{ needs.pr-number.outputs.result }}"
             fi
           }
 
-          re_tag_and_delete_old $IMAGE_NAME $PACKAGE_NAME $PR_NUMBER
-          re_tag_and_delete_old "${IMAGE_NAME}-cache" "${PACKAGE_NAME}-cache" $PR_NUMBER
+          tag_latest_if_pr_image_exists ${{ steps.image-names.outputs.github }}
+          tag_latest_if_pr_image_exists ${{ steps.image-names.outputs.github }}-cache
       - <<: *report
   publish-for-push:
     name: Publish images for direct push
@@ -138,8 +118,6 @@ jobs:
         include:
           - name: web-api
             heroku_app_key: WEB_API_APP
-            package-name: '@my/web-api'
-            path: apps/web-api
     steps:
       - uses: actions/checkout@v2
       - <<: *pnpm-store-cache
@@ -152,20 +130,20 @@ jobs:
       - name: Set image names
         id: image-names
         run: |
-          echo "::set-output name=github::ghcr.io/${{ github.repository }}-${{ env.GITHUB_REF_SLUG }}-${{ matrix.name }}"
+          echo "::set-output name=github::${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}-${{ env.GITHUB_BASE_REF_SLUG }}-${{ matrix.name }}"
           echo "::set-output name=heroku::registry.heroku.com/${{ env[matrix.heroku_app_key] }}/web"
       - uses: docker/setup-buildx-action@v1
       - name: Build and Push docker image
         run: |
-          .scripts/make-dedicated-lockfile.ts ${{ matrix.package-name }} --replace
+          .scripts/make-dedicated-lockfile.ts ${{ matrix.name }} --replace
           docker -v
           docker buildx version
           docker buildx build \
-            --cache-from=${{ steps.image-names.outputs.github }}:latest \
+            --cache-from=${{ env.DOCKER_REPOSITORY }}/${{ steps.image-names.outputs.github }}:latest \
             --cache-to=type=inline \
-            -t ${{ steps.image-names.outputs.github }}:latest \
+            -t ${{ env.DOCKER_REPOSITORY }}/${{ steps.image-names.outputs.github }}:latest \
             -t ${{ steps.image-names.outputs.heroku }} \
-            -f ${{ matrix.path }}/Dockerfile \
+            -f $(.scripts/dir-for-app.ts ${{ matrix.name }})/Dockerfile \
             --push \
             .
       - <<: *report
