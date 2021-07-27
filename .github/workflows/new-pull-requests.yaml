@@ -133,12 +133,12 @@ jobs:
       - name: Prepare e2e tests if needed
         id: prepare-e2e
         run: |
-          PREPARED=.scripts/prepare-e2e-if-needed.ts \
+          PREPARED=$(.scripts/ci/prepare-e2e-if-needed.ts \
             --repository ${{ env.DOCKER_REPOSITORY }} \
             --image ${{ env.IMAGE }} \
             --tag ${{ github.event.pull_request.number }} \
             --deps ${{ matrix.deps }} \
-             ${{ matrix.name }}
+             ${{ matrix.name }})
           echo "::set-output name=prepared::$PREPARED"
       - name: Run integration tests
         if: steps.prepare-e2e.outputs.prepared == 'true'

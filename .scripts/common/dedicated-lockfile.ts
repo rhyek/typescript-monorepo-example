@@ -45,7 +45,6 @@ export async function _internalMakeDedicatedLockfileForPackage(
   }
   const dedicatedLockfile = pruneSharedLockfile(lockfile);
   if (Object.keys(dedicatedLockfile.importers).length === 0) {
-    console.error(`Dedicated lockfile for package ${forAppName} is empty.`);
     return null;
   } else {
     const tempDir = tempy.directory();
