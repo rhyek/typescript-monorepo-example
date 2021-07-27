@@ -1,0 +1,2 @@
+HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+WEB_API_APP: typescript-monorepo

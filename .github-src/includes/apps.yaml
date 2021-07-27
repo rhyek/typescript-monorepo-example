@@ -1,0 +1,16 @@
+new-pull-requests-build-matrix: &new-pull-requests-build-matrix
+  - name: web-api
+  - name: internal-api
+new-pull-requests-integration-tests-matrix: &new-pull-requests-integration-tests-matrix
+  - name: web-api
+    deps: internal-api
+  - name: internal-api
+push-publish-for-pr-matrix: &push-publish-for-pr-matrix
+  - name: web-api
+    heroku_app_key: WEB_API_APP
+  - name: internal-api
+push-publish-for-push-matrix: &push-publish-for-push-matrix
+  - name: web-api
+    heroku_app_key: WEB_API_APP
+push-deploy-apps: &push-deploy-apps
+  - run: heroku container:release web --app=$WEB_API_APP

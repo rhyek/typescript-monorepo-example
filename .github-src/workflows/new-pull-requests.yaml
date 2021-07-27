@@ -11,6 +11,7 @@ env:
 
 anchors:
   !include(../includes/common-anchors)
+  !include(../includes/apps)
   node-modules-cache: &node-modules-cache
     name: Cache node_modules
     uses: actions/cache@v2
@@ -45,8 +46,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: web-api
-          - name: internal-api
+          *new-pull-requests-build-matrix
     steps:
       - uses: actions/checkout@v2
       - <<: *node-modules-cache
@@ -85,9 +85,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: web-api
-            deps: internal-api
-          - name: internal-api
+          *new-pull-requests-integration-tests-matrix
     steps:
       - uses: actions/checkout@v2
       - <<: *node-modules-cache
