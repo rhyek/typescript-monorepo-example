@@ -3,7 +3,7 @@ name: Delete images for closed PRs
 on:
   pull_request:
     branches:
-      - main
+      !include(../includes/branches)
     types: [closed]
 
 #prettier-ignore

@@ -90,8 +90,8 @@ jobs:
           echo "::set-output name=result::$RESULT"
       - name: Heroku Docker login
         run: >-
-          echo ${{ secrets.HEROKU_API_KEY }} | docker login registry.heroku.com
-          --username=_ --password-stdin
+          echo ${{ env.HEROKU_API_KEY }} | docker login registry.heroku.com -u=_
+          --password-stdin
         if: >-
           steps.image-exists.outputs.result == 'true' && matrix.heroku_app_key
           != ''
@@ -169,8 +169,8 @@ jobs:
           --password-stdin
       - name: Heroku Docker login
         run: >-
-          echo ${{ secrets.HEROKU_API_KEY }} | docker login registry.heroku.com
-          --username=_ --password-stdin
+          echo ${{ env.HEROKU_API_KEY }} | docker login registry.heroku.com -u=_
+          --password-stdin
       - name: Set image names
         id: image-names
         run: >

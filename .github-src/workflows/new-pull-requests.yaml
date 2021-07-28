@@ -3,7 +3,7 @@ name: Tests and Build
 on:
   pull_request:
     branches:
-      - main
+      !include(../includes/branches)
 
 #prettier-ignore
 env:
